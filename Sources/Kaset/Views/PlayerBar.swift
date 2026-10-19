@@ -97,8 +97,8 @@ struct PlayerBar: View { // swiftlint:disable:this type_body_length
     private var playerAreaFade: some View {
         LinearGradient(
             colors: [
-                Color(nsColor: .windowBackgroundColor).opacity(0),
-                Color(nsColor: .windowBackgroundColor).opacity(0.22),
+                Color.kasetBackground.opacity(0),
+                Color.kasetBackground.opacity(0.22),
             ],
             startPoint: .top,
             endPoint: .bottom

@@ -31,8 +31,8 @@ struct WhatsNewView: View {
             LinearGradient(
                 colors: [
                     Color.accentColor.opacity(self.colorScheme == .dark ? 0.16 : 0.08),
-                    Color(nsColor: .windowBackgroundColor),
-                    Color(nsColor: .windowBackgroundColor),
+                    Color.kasetBackground,
+                    Color.kasetBackground,
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing

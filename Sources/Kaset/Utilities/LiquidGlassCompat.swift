@@ -153,8 +153,11 @@ private struct CompatTranslucentSidebarModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         if !self.usesLegacyMacOS15UI, #available(macOS 26.0, *) {
-            // macOS 26: reveal the system floating Liquid Glass.
-            content.scrollContentBackground(.hidden)
+            // macOS 26: reveal the system floating Liquid Glass, washed toward
+            // the app's black in dark mode.
+            content
+                .scrollContentBackground(.hidden)
+                .background(Color(nsColor: .kasetSidebarTint))
         } else {
             // Legacy macOS 15: drop the opaque list material and lay an
             // `.ultraThinMaterial` behind the sidebar so it reads as a blurred,

@@ -31,7 +31,7 @@ struct AccentBackground: View {
         ZStack {
             // Base gradient from extracted colors
             LinearGradient(
-                colors: [self.palette.primary, self.palette.secondary, Color(nsColor: .windowBackgroundColor).opacity(0.95)],
+                colors: [self.palette.primary, self.palette.secondary, Color.kasetBackground.opacity(0.95)],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -53,7 +53,7 @@ struct AccentBackground: View {
     private var lightModeBackground: some View {
         ZStack {
             // Base window background
-            Color(nsColor: .windowBackgroundColor)
+            Color.kasetBackground
 
             // Very subtle tint at the top from extracted color
             LinearGradient(

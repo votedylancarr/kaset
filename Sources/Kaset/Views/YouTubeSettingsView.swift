@@ -19,6 +19,15 @@ struct YouTubeSettingsView: View {
                         }
                     }
                     .help(String(localized: "\"Live\" shifts the colors as the video plays; the others stay constant"))
+
+                    Slider(
+                        value: self.$settings.ambientBackdropStrength,
+                        in: SettingsManager.ambientBackdropStrengthRange,
+                        step: 0.05
+                    ) {
+                        Text(String(localized: "Glow Strength"))
+                    }
+                    .accessibilityValue(Text(self.settings.ambientBackdropStrength, format: .percent.precision(.fractionLength(0))))
                 }
             } header: {
                 Text(String(localized: "Ambient Backdrop"))

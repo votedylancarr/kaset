@@ -572,12 +572,21 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
             }
             .id(self.contentResetID)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .coordinateSpace(name: AmbientGlowSpace.name)
+            .background {
+                // YouTube watch-page ambient halo; reaches under sidebar and toolbar.
+                AmbientGlowHost()
+                    .ignoresSafeArea()
+            }
 
             // Right sidebar overlay - either lyrics or queue (mutually exclusive)
             self.rightSidebarOverlay(client: self.client)
         }
         .animation(.easeInOut(duration: 0.25), value: self.playerService.showLyrics)
         .animation(.easeInOut(duration: 0.25), value: self.playerService.showQueue)
+        .containerBackground(Color.kasetBackground, for: .window)
+        // Match the toolbar to the app background so it doesn't stand out in dark mode.
+        .toolbarBackground(Color.kasetBackground, for: .windowToolbar)
         .frame(minWidth: MainWindowLayout.minimumWidth, minHeight: MainWindowLayout.minimumHeight)
         .toolbar {
             if self.supportsCommandBarUI {
@@ -663,8 +672,7 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    @ViewBuilder
-    private var commandBar: some View {
+    @ViewBuilder private var commandBar: some View {
         if !self.usesLegacyMacOS15UI, #available(macOS 26.0, *) {
             CommandBarView(
                 client: self.client,

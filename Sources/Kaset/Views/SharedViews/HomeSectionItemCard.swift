@@ -102,7 +102,7 @@ struct HomeSectionItemCard: View, Equatable {
             Text("\(rank)")
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
-                .shadow(color: Color(nsColor: .windowBackgroundColor).opacity(0.8), radius: 4, x: 0, y: 1)
+                .shadow(color: Color.kasetBackground.opacity(0.8), radius: 4, x: 0, y: 1)
                 .padding(.leading, 8)
                 .padding(.bottom, 60)
         }

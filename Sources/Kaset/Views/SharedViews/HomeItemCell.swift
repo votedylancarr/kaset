@@ -212,7 +212,7 @@ final class HomeItemCell: NSView {
 
     private static func rankImage(_ rank: Int, scale: CGFloat, isRightToLeft: Bool) -> CGImage? {
         let shadow = NSShadow()
-        shadow.shadowColor = NSColor.windowBackgroundColor.withAlphaComponent(0.8)
+        shadow.shadowColor = NSColor.kasetBackground.withAlphaComponent(0.8)
         shadow.shadowBlurRadius = 4
         shadow.shadowOffset = NSSize(width: 0, height: -1)
         let string = NSAttributedString(string: "\(rank)", attributes: [

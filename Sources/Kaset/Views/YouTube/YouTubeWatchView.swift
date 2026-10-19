@@ -28,6 +28,7 @@ struct YouTubeWatchView: View {
     @State private var commentDraft = ""
     @State private var settings = SettingsManager.shared
     @State private var isVideoControlsRegionOnScreen = true
+    @State private var videoFrame: CGRect = .zero
 
     /// The ambient backdrop style to render: the user's chosen style, or `.off`
     /// when they've disabled the feature in Settings → YouTube.
@@ -55,6 +56,19 @@ struct YouTubeWatchView: View {
         return self.youtubePlayer.storyboardSpec
     }
 
+    /// The halo request published to the window-level glow host.
+    private var ambientAnchor: AmbientGlowState.Anchor {
+        AmbientGlowState.Anchor(
+            frame: self.videoFrame,
+            videoId: self.video.videoId,
+            thumbnailURL: self.video.thumbnailURL,
+            style: self.ambientStyle,
+            liveFraction: self.ambientLiveFraction,
+            storyboardSpec: self.ambientStoryboardSpec,
+            strength: self.settings.ambientBackdropStrength
+        )
+    }
+
     private var askAccountScope: YouTubeAskAccountScopeObservation {
         YouTubeAskAccountScopeObservation(
             authenticationGeneration: self.authService.accountIdentityGeneration,
@@ -69,6 +83,7 @@ struct YouTubeWatchView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 self.videoSurface
+                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(AmbientGlowSpace.name)) } action: { self.videoFrame = $0 }
                     .onGeometryChange(for: Bool.self) { [bottomInset = self.bottomPlayerBarHeight] proxy in
                         YouTubeInlineControlsVisibility.isControlsRegionVisible(
                             videoSize: proxy.size,
@@ -105,20 +120,11 @@ struct YouTubeWatchView: View {
             .padding(.vertical, 20)
         }
         .disabled(self.viewModel.ask.isExpanded)
-        // PROTOTYPE: full-bleed ambient color behind the page. `.ignoresSafeArea`
-        // (inside the modifier) lets it bleed under the bottom player-bar inset,
-        // so the bar's Liquid Glass capsule refracts the live color.
-        .ambientVideoBackdrop(
-            videoId: self.video.videoId,
-            thumbnailURL: self.video.thumbnailURL,
-            style: self.ambientStyle,
-            liveFraction: self.ambientLiveFraction,
-            storyboardSpec: self.ambientStoryboardSpec
-        )
+        .onChange(of: self.ambientAnchor, initial: true) { _, anchor in
+            AmbientGlowState.shared.anchor = anchor
+        }
         // The in-page metadata shows the title; keep the bar clean.
         .navigationTitle(String(localized: ""))
-        // Let the ambient reach under the nav bar, like the other accent pages.
-        .toolbarBackgroundVisibility(.hidden, for: .automatic)
         .toolbar {
             if self.viewModel.ask.isAvailable {
                 ToolbarItem(placement: .primaryAction) {
@@ -146,6 +152,10 @@ struct YouTubeWatchView: View {
             )
         }
         .onDisappear {
+            // Only clear our own halo: a newly shown watch page may have published first.
+            if AmbientGlowState.shared.anchor?.videoId == self.video.videoId {
+                AmbientGlowState.shared.anchor = nil
+            }
             self.viewModel.cancel()
             self.youtubePlayer.inlineSurfaceWillDisappear(videoId: self.video.videoId)
         }

@@ -34,6 +34,7 @@ final class SettingsManager {
         static let smartShuffleSuggestionsAhead = "settings.smartShuffleSuggestionsAhead"
         static let ambientBackdropEnabled = "settings.ambientBackdropEnabled"
         static let ambientBackdropStyle = "settings.ambientBackdropStyle"
+        static let ambientBackdropStrength = "settings.ambientBackdropStrength"
         static let popOutVideoOnNavigateAway = "settings.popOutVideoOnNavigateAway"
         static let showYouTubeControlsOnVideo = "settings.showYouTubeControlsOnVideo"
         #if DEBUG
@@ -393,6 +394,14 @@ final class SettingsManager {
     /// Valid range for how many suggestions to keep queued ahead.
     static let smartShuffleSuggestionsAheadRange = 5 ... 100
 
+    nonisolated static let ambientBackdropStrengthRange = 0.25 ... 2.0
+    nonisolated static let ambientBackdropStrengthDefault = 1.0
+
+    nonisolated static func clampAmbientBackdropStrength(_ value: Double) -> Double {
+        guard value.isFinite else { return self.ambientBackdropStrengthDefault }
+        return min(max(value, self.ambientBackdropStrengthRange.lowerBound), self.ambientBackdropStrengthRange.upperBound)
+    }
+
     private static func clamp(_ value: Int, to range: ClosedRange<Int>) -> Int {
         min(max(value, range.lowerBound), range.upperBound)
     }
@@ -449,6 +458,18 @@ final class SettingsManager {
     var ambientBackdropStyle: AmbientBackdropStyle {
         didSet {
             UserDefaults.standard.set(self.ambientBackdropStyle.rawValue, forKey: Keys.ambientBackdropStyle)
+        }
+    }
+
+    /// How strong the ambient glow is, as a multiplier on its default brightness.
+    var ambientBackdropStrength: Double {
+        didSet {
+            let clamped = Self.clampAmbientBackdropStrength(self.ambientBackdropStrength)
+            if clamped != self.ambientBackdropStrength {
+                self.ambientBackdropStrength = clamped
+                return
+            }
+            UserDefaults.standard.set(clamped, forKey: Keys.ambientBackdropStrength)
         }
     }
 
@@ -563,6 +584,10 @@ final class SettingsManager {
             to: Self.smartShuffleSuggestionsAheadRange
         )
         self.ambientBackdropEnabled = UserDefaults.standard.object(forKey: Keys.ambientBackdropEnabled) as? Bool ?? true
+        self.ambientBackdropStrength = Self.clampAmbientBackdropStrength(
+            UserDefaults.standard.object(forKey: Keys.ambientBackdropStrength) as? Double
+                ?? Self.ambientBackdropStrengthDefault
+        )
         self.popOutVideoOnNavigateAway = UserDefaults.standard.object(forKey: Keys.popOutVideoOnNavigateAway) as? Bool ?? true
         self.showYouTubeControlsOnVideo = Self.loadShowYouTubeControlsOnVideo(from: UserDefaults.standard)
         #if DEBUG

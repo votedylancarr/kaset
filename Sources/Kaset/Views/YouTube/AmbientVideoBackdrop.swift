@@ -16,8 +16,8 @@ import SwiftUI
 /// bonus, but the glow stands on its own.
 ///
 /// Self-contained on purpose: it does NOT edit the shared `AccentBackground`
-/// (used by the artist/playlist/podcast pages). Revert by deleting this file and
-/// the `.ambientVideoBackdrop(...)` call in `YouTubeWatchView`.
+/// (used by the artist/playlist/podcast pages). `AmbientGlowHost` draws it
+/// behind the main window; `YouTubeWatchView` publishes where.
 struct AmbientVideoBackdrop: View {
     // MARK: Inputs
 
@@ -31,6 +31,15 @@ struct AmbientVideoBackdrop: View {
     /// its sprite-sheet cells replace the coarse 3-still source. `nil` until the
     /// player publishes it (or unavailable).
     var storyboardSpec: String?
+    /// When true the glow is a soft halo meant to sit behind the video frame
+    /// (blobs hug the frame's edges, no window-wide base fill, edges fade out)
+    /// instead of a full-window background.
+    var anchoredToVideo = false
+    /// User-chosen multiplier on the anchored halo's brightness (1 = default).
+    var strength = 1.0
+    /// How far the anchored halo's frame extends past the video on each side.
+    /// The blobs are placed on the video's edges using this.
+    var haloInset: CGFloat = 160
 
     // MARK: State
 
@@ -65,15 +74,22 @@ struct AmbientVideoBackdrop: View {
                 Color.clear
             } else if self.reduceTransparency {
                 // Reduce Transparency: flatten to a near-solid low tint, no glow.
-                self.flatTint
+                if self.anchoredToVideo {
+                    Color.clear
+                } else {
+                    self.flatTint
+                }
+            } else if self.anchoredToVideo {
+                self.ambientContent
+                    .mask(self.haloMask)
             } else {
                 ZStack {
-                    Color(nsColor: .windowBackgroundColor)
+                    Color.kasetBackground
                     self.ambientContent
                 }
             }
         }
-        .animation(.easeInOut(duration: 0.6), value: self.palette)
+        .animation(.easeInOut(duration: 0.3), value: self.palette)
         .animation(.easeInOut(duration: 0.5), value: style)
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name.NSProcessInfoPowerStateDidChange)) { _ in
             self.lowPowerModeEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
@@ -141,7 +157,9 @@ struct AmbientVideoBackdrop: View {
     private func auroraLayer(size: CGSize, time: TimeInterval?) -> some View {
         let frames = self.renderFrames
         // `.soft` is the calm style: same colors, dimmer than the drifting glow.
-        let intensity: Double = self.effectiveStyle == .soft ? 0.7 : 1.0
+        let baseIntensity: Double = self.effectiveStyle == .soft ? 0.7 : 1.0
+        // The anchored halo is a subtle accent, not a page wash.
+        let intensity = self.anchoredToVideo ? baseIntensity * Self.haloIntensityScale * self.strength : baseIntensity
         // Under Reduce Motion, collapse `.live` to a single static frame: the
         // blobs already stop drifting (time: nil) and the colors must not
         // cross-fade as playback advances either.
@@ -151,7 +169,9 @@ struct AmbientVideoBackdrop: View {
                 size: size,
                 time: time,
                 colorScheme: self.colorScheme,
-                intensity: intensity
+                intensity: intensity,
+                anchored: self.anchoredToVideo,
+                inset: self.haloInset
             )
         } else {
             let position = (self.liveFraction ?? 0) * Double(frames.count - 1)
@@ -161,9 +181,9 @@ struct AmbientVideoBackdrop: View {
             let lowerColors = frames[lower].isEmpty ? self.fallbackColors : frames[lower]
             let upperColors = frames[upper].isEmpty ? self.fallbackColors : frames[upper]
             ZStack {
-                Self.aurora(colors: lowerColors, size: size, time: time, colorScheme: self.colorScheme, intensity: intensity)
+                Self.aurora(colors: lowerColors, size: size, time: time, colorScheme: self.colorScheme, intensity: intensity, anchored: self.anchoredToVideo, inset: self.haloInset)
                     .opacity(1 - blend)
-                Self.aurora(colors: upperColors, size: size, time: time, colorScheme: self.colorScheme, intensity: intensity)
+                Self.aurora(colors: upperColors, size: size, time: time, colorScheme: self.colorScheme, intensity: intensity, anchored: self.anchoredToVideo, inset: self.haloInset)
                     .opacity(blend)
             }
             .animation(.easeInOut(duration: 0.7), value: self.liveFraction)
@@ -211,7 +231,9 @@ struct AmbientVideoBackdrop: View {
         size: CGSize,
         time: TimeInterval?,
         colorScheme: ColorScheme,
-        intensity: Double
+        intensity: Double,
+        anchored: Bool = false,
+        inset: CGFloat = 0
     ) -> some View {
         let isDark = colorScheme == .dark
         // Additive light reads as "glow" on a dark base; on a light base it
@@ -219,15 +241,24 @@ struct AmbientVideoBackdrop: View {
         let blend: BlendMode = isDark ? .plusLighter : .normal
         let coreOpacity: Double = (isDark ? 0.55 : 0.30) * intensity
         let elapsed = time ?? 0
+        // Anchored: blobs sit ON the video's edges (the video hides their inner
+        // half), so the light that spills out matches what's at each edge.
+        let frameWidth = size.width - inset * 2
+        let frameHeight = size.height - inset * 2
+        let layout: [CGPoint] = anchored
+            ? Self.haloLayout.map { CGPoint(x: inset + $0.x * frameWidth, y: inset + $0.y * frameHeight) }
+            : Self.layout.map { CGPoint(x: $0.x * size.width, y: $0.y * size.height) }
+        let blurRadius: CGFloat = anchored ? 60 : 46
+        let driftScale: CGFloat = anchored ? 0.5 : 1.0
 
         return ZStack {
-            ForEach(Array(colors.prefix(Self.layout.count).enumerated()), id: \.offset) { index, color in
-                let spot = Self.layout[index]
+            ForEach(Array(colors.prefix(layout.count).enumerated()), id: \.offset) { index, color in
+                let spot = layout[index]
                 let period = Self.periods[index]
                 let phase = Self.phases[index]
-                let driftX = time == nil ? 0 : 0.12 * size.width * sin(elapsed / period + phase)
-                let driftY = time == nil ? 0 : 0.10 * size.height * cos(elapsed / (period + 6) + phase)
-                let diameter = size.width
+                let driftX = time == nil ? 0 : 0.12 * driftScale * size.width * sin(elapsed / period + phase)
+                let driftY = time == nil ? 0 : 0.10 * driftScale * size.height * cos(elapsed / (period + 6) + phase)
+                let diameter = anchored ? frameHeight * 0.85 : size.width
 
                 RadialGradient(
                     colors: [color.opacity(coreOpacity), .clear],
@@ -237,14 +268,14 @@ struct AmbientVideoBackdrop: View {
                 )
                 .frame(width: diameter, height: diameter)
                 .position(
-                    x: spot.x * size.width + driftX,
-                    y: spot.y * size.height + driftY
+                    x: spot.x + driftX,
+                    y: spot.y + driftY
                 )
                 .blendMode(blend)
             }
         }
         .compositingGroup()
-        .blur(radius: 46)
+        .blur(radius: blurRadius)
         .frame(width: size.width, height: size.height)
         .clipped()
     }
@@ -255,6 +286,27 @@ struct AmbientVideoBackdrop: View {
         (0.28, 0.24), (0.74, 0.20), (0.18, 0.58), (0.82, 0.64), (0.50, 0.42),
     ]
 
+    /// Resting positions for the anchored halo, in unit coords of the video frame
+    /// itself: upper/lower left edge, upper/lower right edge, and bottom center.
+    /// Edge colors are sampled from the matching regions of the thumbnail.
+    private static let haloLayout: [(x: CGFloat, y: CGFloat)] = [
+        (0.0, 0.28), (1.0, 0.30), (0.0, 0.74), (1.0, 0.72), (0.5, 1.0),
+    ]
+
+    /// How much dimmer the anchored halo is than the full-window backdrop.
+    private static let haloIntensityScale: Double = 0.9
+
+    /// Fades the halo to nothing at the edge of its (padded) frame, so it never
+    /// ends in a hard line against the plain window background. Solid well inside
+    /// the border, with a wide soft falloff outward.
+    private var haloMask: some View {
+        let inset = self.haloInset * 0.45
+        return Rectangle()
+            .fill(.black)
+            .padding(inset)
+            .blur(radius: inset * 0.8)
+    }
+
     /// Mutually-prime orbit periods (seconds) so the drift never visibly loops.
     private static let periods: [Double] = [19, 23, 29, 31, 37]
     private static let phases: [Double] = [0.0, 1.7, 3.1, 4.6, 5.9]
@@ -262,7 +314,7 @@ struct AmbientVideoBackdrop: View {
     /// Reduce Transparency fallback: a flat, low-opacity tint, no motion.
     private var flatTint: some View {
         ZStack {
-            Color(nsColor: .windowBackgroundColor)
+            Color.kasetBackground
             LinearGradient(
                 colors: [self.currentPalette.primary.opacity(0.14), .clear],
                 startPoint: .top,
@@ -414,15 +466,15 @@ struct AmbientVideoBackdrop: View {
         return trimmed.isEmpty ? nil : Array(trimmed)
     }
 
-    /// Pulls up to five distinct, vivid colors from an image by binning pixels
-    /// by hue and keeping the most saturated-and-bright clusters. Unlike
-    /// `ColorExtractor`'s single weighted average, this preserves multiple hues
-    /// so the aurora has real color variety to move between.
-    nonisolated private static func extractSwatches(from image: NSImage, maxCount: Int = 5) -> [Color] {
+    /// Samples the image's edge regions, in the order of `haloLayout`: upper
+    /// left, upper right, lower left, lower right, bottom center. Each is the
+    /// region's average color, lifted just enough to read as emitted light, so the
+    /// halo continues the colors found at the video's actual edges.
+    nonisolated private static func extractSwatches(from image: NSImage) -> [Color] {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             return []
         }
-        let dimension = 24
+        let dimension = 32
         guard let context = CGContext(
             data: nil,
             width: dimension,
@@ -431,88 +483,48 @@ struct AmbientVideoBackdrop: View {
             bytesPerRow: dimension * 4,
             space: CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
+        ), cgImage.width > 0, cgImage.height > 0 else {
             return []
         }
-
         context.interpolationQuality = .medium
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: dimension, height: dimension))
-
-        guard let data = context.data else {
-            return []
-        }
+        guard let data = context.data else { return [] }
         let pointer = data.bindMemory(to: UInt8.self, capacity: dimension * dimension * 4)
 
-        let binCount = 12
-        var weight = [Double](repeating: 0, count: binCount)
-        var sumR = [Double](repeating: 0, count: binCount)
-        var sumG = [Double](repeating: 0, count: binCount)
-        var sumB = [Double](repeating: 0, count: binCount)
-
-        for index in 0 ..< (dimension * dimension) {
-            let offset = index * 4
-            let red = Double(pointer[offset]) / 255
-            let green = Double(pointer[offset + 1]) / 255
-            let blue = Double(pointer[offset + 2]) / 255
-
-            let maxC = max(red, green, blue)
-            let minC = min(red, green, blue)
-            let brightness = maxC
-            let saturation = maxC > 0 ? (maxC - minC) / maxC : 0
-
-            // Skip near-black, near-white, and washed-out pixels.
-            guard brightness > 0.12, brightness < 0.97, saturation > 0.18 else {
-                continue
+        // Unit-coordinate rects (origin top-left, row 0 is the image's top).
+        let regions: [CGRect] = [
+            CGRect(x: 0.0, y: 0.08, width: 0.14, height: 0.42),
+            CGRect(x: 0.86, y: 0.08, width: 0.14, height: 0.42),
+            CGRect(x: 0.0, y: 0.50, width: 0.14, height: 0.42),
+            CGRect(x: 0.86, y: 0.50, width: 0.14, height: 0.42),
+            CGRect(x: 0.20, y: 0.86, width: 0.60, height: 0.14),
+        ]
+        let side = CGFloat(dimension)
+        return regions.map { region in
+            let firstColumn = Int(region.minX * side)
+            let firstRow = Int(region.minY * side)
+            let columns = firstColumn ..< max(Int(region.maxX * side), firstColumn + 1)
+            let rows = firstRow ..< max(Int(region.maxY * side), firstRow + 1)
+            var red = 0.0
+            var green = 0.0
+            var blue = 0.0
+            var count = 0.0
+            for row in rows where row < dimension {
+                for column in columns where column < dimension {
+                    let offset = (row * dimension + column) * 4
+                    red += Double(pointer[offset])
+                    green += Double(pointer[offset + 1])
+                    blue += Double(pointer[offset + 2])
+                    count += 1
+                }
             }
-
-            let hue = Self.hue(red: red, green: green, blue: blue, maxC: maxC, minC: minC)
-            let bin = min(binCount - 1, Int(hue / 360 * Double(binCount)))
-            let pixelWeight = saturation * brightness
-            weight[bin] += pixelWeight
-            sumR[bin] += red * pixelWeight
-            sumG[bin] += green * pixelWeight
-            sumB[bin] += blue * pixelWeight
+            guard count > 0 else { return Color.clear }
+            return Self.glowColor(red: red / count / 255, green: green / count / 255, blue: blue / count / 255)
         }
-
-        let clusters = (0 ..< binCount)
-            .filter { weight[$0] > 0 }
-            .map { bin in
-                (weight: weight[bin], color: Self.glowColor(
-                    red: sumR[bin] / weight[bin],
-                    green: sumG[bin] / weight[bin],
-                    blue: sumB[bin] / weight[bin]
-                ))
-            }
-            .sorted { $0.weight > $1.weight }
-            .prefix(maxCount)
-            .map(\.color)
-
-        return Array(clusters)
     }
 
-    /// HSB hue in degrees from RGB extremes.
-    nonisolated private static func hue(
-        red: Double,
-        green: Double,
-        blue: Double,
-        maxC: Double,
-        minC: Double
-    ) -> Double {
-        let delta = maxC - minC
-        guard delta > 0 else { return 0 }
-        var hue: Double = if maxC == red {
-            ((green - blue) / delta).truncatingRemainder(dividingBy: 6)
-        } else if maxC == green {
-            (blue - red) / delta + 2
-        } else {
-            (red - green) / delta + 4
-        }
-        hue *= 60
-        return hue < 0 ? hue + 360 : hue
-    }
-
-    /// Boosts a cluster's saturation and normalizes brightness so it reads as
-    /// emitted light in the aurora rather than a muddy average.
+    /// Lifts an edge color's brightness (so dim edges still glow) and slightly
+    /// boosts saturation, keeping the hue faithful to the video.
     nonisolated private static func glowColor(red: Double, green: Double, blue: Double) -> Color {
         let base = NSColor(red: red, green: green, blue: blue, alpha: 1)
         var hue: CGFloat = 0
@@ -520,39 +532,15 @@ struct AmbientVideoBackdrop: View {
         var brightness: CGFloat = 0
         var alpha: CGFloat = 0
         base.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
-        let boosted = NSColor(
+        let lifted = NSColor(
             hue: hue,
-            saturation: min(saturation * 1.35, 1),
-            brightness: max(min(brightness * 1.1, 0.9), 0.55),
+            saturation: min(saturation * 1.15, 1),
+            brightness: max(min(brightness * 1.25, 0.95), 0.35),
             alpha: 1
         )
-        return Color(nsColor: boosted)
+        return Color(nsColor: lifted)
     }
     // swiftformat:enable modifierOrder
-}
-
-// MARK: - View modifier
-
-extension View {
-    /// Applies the prototype ambient glow full-bleed behind the content.
-    func ambientVideoBackdrop(
-        videoId: String?,
-        thumbnailURL: URL?,
-        style: AmbientBackdropStyle,
-        liveFraction: Double?,
-        storyboardSpec: String?
-    ) -> some View {
-        self.background {
-            AmbientVideoBackdrop(
-                videoId: videoId,
-                thumbnailURL: thumbnailURL,
-                style: style,
-                liveFraction: liveFraction,
-                storyboardSpec: storyboardSpec
-            )
-            .ignoresSafeArea()
-        }
-    }
 }
 
 // MARK: - StoryboardSheet
