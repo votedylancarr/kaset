@@ -70,10 +70,10 @@ struct KasetApp: App {
     @State private var sidebarNavigationReselectGenerations: [NavigationItem: Int] = [:]
 
     /// Current navigation selection for keyboard navigation.
-    @State private var navigationSelection: NavigationItem? = SettingsManager.shared.launchNavigationItem
+    @State private var navigationSelection: NavigationItem? = DebugSessionRestore.restoredMusicSelection() ?? SettingsManager.shared.launchNavigationItem
 
     /// Current navigation selection for the YouTube (video) experience.
-    @State private var youtubeNavigationSelection: YouTubeNavigationItem? = .home
+    @State private var youtubeNavigationSelection: YouTubeNavigationItem? = DebugSessionRestore.restoredYouTubeSelection() ?? .home
 
     /// Monotonic command request consumed by `MainWindow` to refresh the active Home feed.
     @State private var homeRefreshRequestID = 0
