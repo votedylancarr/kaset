@@ -376,6 +376,8 @@
 "Podcasts" = "Podcast";
 "Pop" = "流行";
 "Pop Out Video When Navigating Away" = "離開頁面時彈出影片";
+"Pop Out Video When Covered" = "被遮蔽時彈出影片";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "當其他視窗遮蔽 Kaset 時，將播放中的影片移到浮動視窗；Kaset 再次可見時移回。";
 "Pop video back into Kaset" = "將影片放回 Kaset";
 "Post comment" = "發布留言";
 "Preamp" = "前級增益";

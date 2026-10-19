@@ -57,6 +57,9 @@ struct YouTubeSettingsView: View {
 
                 Toggle(String(localized: "Pop Out Video When Navigating Away"), isOn: self.$settings.popOutVideoOnNavigateAway)
                     .help(String(localized: "Keep a playing video in a floating window when you leave the page. When off, the video stops instead."))
+
+                Toggle(String(localized: "Pop Out Video When Covered"), isOn: self.$settings.popOutVideoWhenCovered)
+                    .help(String(localized: "Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again."))
             } header: {
                 Text(String(localized: "Video Window"))
             } footer: {

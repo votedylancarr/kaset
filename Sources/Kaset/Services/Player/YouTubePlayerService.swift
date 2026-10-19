@@ -62,7 +62,7 @@ extension YouTubeWatchWebView: YouTubeWatchPlaybackControlling {
 /// the extracted video surface.
 @MainActor
 @Observable
-final class YouTubePlayerService {
+final class YouTubePlayerService { // swiftlint:disable:this type_body_length
     // MARK: - State
 
     /// The video currently loaded for playback (nil when playback is closed).
@@ -257,6 +257,15 @@ final class YouTubePlayerService {
     @ObservationIgnored var autoplayGeneration: UInt64 = 0
     @ObservationIgnored let shouldAutoplayNext: @MainActor () -> Bool
 
+    /// Whether a playing inline video pops out when the app window is covered.
+    @ObservationIgnored let shouldPopOutWhenCovered: @MainActor () -> Bool
+
+    /// True while the video is floating because the main window was covered (as
+    /// opposed to navigating away or a manual pop-out). Written only by
+    /// `YouTubePlayerService+Coverage`; the floating window reads it to float above
+    /// the covering app, and uncovering docks the video back only when it is set.
+    var isPoppedOutForCoverage = false
+
     /// Whether the current video was added to Watch Later this session.
     private(set) var isInWatchLater = false
 
@@ -335,12 +344,14 @@ final class YouTubePlayerService {
         playbackController: (any YouTubeWatchPlaybackControlling)? = nil,
         shouldPopOutOnNavigateAway: @escaping @MainActor () -> Bool = { SettingsManager.shared.popOutVideoOnNavigateAway },
         shouldAutoplayNext: @escaping @MainActor () -> Bool = { SettingsManager.shared.autoplayNextVideo },
+        shouldPopOutWhenCovered: @escaping @MainActor () -> Bool = { SettingsManager.shared.popOutVideoWhenCovered },
         playbackLoadingTimeout: Duration = .seconds(15)
     ) {
         self.webKitManager = webKitManager
         self.playbackController = playbackController ?? YouTubeWatchWebView.shared
         self.shouldPopOutOnNavigateAway = shouldPopOutOnNavigateAway
         self.shouldAutoplayNext = shouldAutoplayNext
+        self.shouldPopOutWhenCovered = shouldPopOutWhenCovered
         self.playbackLoadingTimeout = playbackLoadingTimeout
     }
 
@@ -353,6 +364,7 @@ final class YouTubePlayerService {
         self.shouldRecoverAutoplayTransitionOnResume = false
         let normalizedStartAt = Self.normalizedExplicitStartAt(startAt)
         self.logger.info("YouTubePlayer: play video")
+        self.isPoppedOutForCoverage = false
         self.usesCookieFreePlaybackDataStore = usesCookieFreeDataStore
         self.playbackWillStart?()
 
@@ -716,6 +728,7 @@ final class YouTubePlayerService {
         self.autoplayRecoveryRequestGeneration &+= 1
         self.shouldRecoverAutoplayTransitionOnResume = false
         self.logger.info("YouTubePlayer: stop")
+        self.isPoppedOutForCoverage = false
         // Closing/stopping a video that accrued progress changes its resume
         // state in history, so signal the conclusion before clearing — this
         // covers closing the floating window (windowWillClose -> stop) and
@@ -767,6 +780,7 @@ final class YouTubePlayerService {
     func dockInline() {
         guard self.currentVideo != nil else { return }
         self.logger.info("YouTubePlayer: dock inline")
+        self.isPoppedOutForCoverage = false
         self.surfaceLocation = .inline
     }
 

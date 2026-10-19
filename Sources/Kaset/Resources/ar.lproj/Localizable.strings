@@ -367,6 +367,8 @@
 "Podcasts" = "بودكاست";
 "Pop" = "بوب";
 "Pop Out Video When Navigating Away" = "فتح الفيديو في نافذة عند مغادرة الصفحة";
+"Pop Out Video When Covered" = "إخراج الفيديو عند تغطية النافذة";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "نقل الفيديو الجاري إلى النافذة العائمة عندما تغطي نوافذ أخرى Kaset، وإعادته عندما يصبح Kaset مرئيًا مجددًا.";
 "Pop video back into Kaset" = "إرجاع الفيديو إلى Kaset";
 "Post comment" = "نشر التعليق";
 "Preamp" = "مكبر مسبق";

@@ -58503,6 +58503,218 @@
         }
       }
     },
+    "Pop Out Video When Covered": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إخراج الفيديو عند تغطية النافذة"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video auslagern, wenn verdeckt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sacar el vídeo cuando esté tapado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détacher la vidéo lorsque la fenêtre est masquée"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keluarkan video saat tertutup"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stacca il video quando è coperto"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "覆われたときに動画をポップアウト"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "가려지면 비디오 팝아웃"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video losmaken wanneer bedekt"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wysuwaj wideo, gdy okno jest zasłonięte"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destacar vídeo quando estiver coberto"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выносить видео, когда окно закрыто"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyft ut video när fönstret är täckt"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapatıldığında videoyu ayır"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Виносити відео, коли вікно закрите"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "被遮挡时弹出视频"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "被遮蔽時彈出影片"
+          }
+        }
+      }
+    },
+    "Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نقل الفيديو الجاري إلى النافذة العائمة عندما تغطي نوافذ أخرى Kaset، وإعادته عندما يصبح Kaset مرئيًا مجددًا."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verschiebt ein laufendes Video in das schwebende Fenster, wenn andere Fenster Kaset verdecken, und zurück, sobald Kaset wieder sichtbar ist."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mueve un vídeo en reproducción a la ventana flotante cuando otras ventanas cubren Kaset y lo devuelve cuando Kaset vuelve a ser visible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplace une vidéo en lecture dans la fenêtre flottante lorsque d'autres fenêtres recouvrent Kaset, puis la remet quand Kaset est de nouveau visible."
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pindahkan video yang sedang diputar ke jendela mengambang saat jendela lain menutupi Kaset, lalu kembalikan saat Kaset terlihat lagi."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sposta un video in riproduzione nella finestra mobile quando altre finestre coprono Kaset e lo riporta quando Kaset torna visibile."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "他のウインドウが Kaset を覆うと再生中の動画をフローティングウインドウに移し、Kaset が再び見えるようになると元に戻します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다른 윈도우가 Kaset을 가리면 재생 중인 비디오를 플로팅 윈도우로 옮기고, Kaset이 다시 보이면 되돌립니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verplaatst een video die wordt afgespeeld naar het zwevende venster wanneer andere vensters Kaset bedekken, en terug zodra Kaset weer zichtbaar is."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przenosi odtwarzane wideo do pływającego okna, gdy inne okna zasłaniają Kaset, i z powrotem, gdy Kaset znów jest widoczny."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move um vídeo em reprodução para a janela flutuante quando outras janelas cobrem o Kaset e devolve quando o Kaset volta a ficar visível."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переносит воспроизводимое видео в плавающее окно, когда другие окна закрывают Kaset, и возвращает его, когда Kaset снова виден."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flyttar en video som spelas till det flytande fönstret när andra fönster täcker Kaset, och tillbaka när Kaset syns igen."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diğer pencereler Kaset'i kapattığında oynatılan videoyu yüzen pencereye taşır, Kaset yeniden göründüğünde geri getirir."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переносить відео, що відтворюється, у плаваюче вікно, коли інші вікна закривають Kaset, і повертає його, коли Kaset знову видно."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当其他窗口遮挡 Kaset 时，将正在播放的视频移到浮动窗口；Kaset 再次可见时移回。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "當其他視窗遮蔽 Kaset 時，將播放中的影片移到浮動視窗；Kaset 再次可見時移回。"
+          }
+        }
+      }
+    },
     "Player Controls": {
       "comment": "Settings → YouTube section header for where the playback controls are shown",
       "localizations": {

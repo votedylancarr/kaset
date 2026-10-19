@@ -367,6 +367,8 @@
 "Podcasts" = "Подкасты";
 "Pop" = "Pop";
 "Pop Out Video When Navigating Away" = "Открывать видео в отдельном окне при уходе со страницы";
+"Pop Out Video When Covered" = "Выносить видео, когда окно закрыто";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "Переносит воспроизводимое видео в плавающее окно, когда другие окна закрывают Kaset, и возвращает его, когда Kaset снова виден.";
 "Pop video back into Kaset" = "Вернуть видео в Kaset";
 "Post comment" = "Опубликовать комментарий";
 "Preamp" = "Предусиление";

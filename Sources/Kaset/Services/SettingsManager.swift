@@ -37,6 +37,7 @@ final class SettingsManager {
         static let ambientBackdropStrength = "settings.ambientBackdropStrength"
         static let autoplayNextVideo = "settings.autoplayNextVideo"
         static let popOutVideoOnNavigateAway = "settings.popOutVideoOnNavigateAway"
+        static let popOutVideoWhenCovered = "settings.popOutVideoWhenCovered"
         static let showYouTubeControlsOnVideo = "settings.showYouTubeControlsOnVideo"
         #if DEBUG
             static let useLegacyMacOS15UI = "settings.debug.useLegacyMacOS15UI"
@@ -491,6 +492,15 @@ final class SettingsManager {
         }
     }
 
+    /// Whether a playing YouTube video pops out into the floating window while the
+    /// main window is covered by other windows, and docks back when it is visible
+    /// again. Applies to regular YouTube videos only.
+    var popOutVideoWhenCovered: Bool {
+        didSet {
+            UserDefaults.standard.set(self.popOutVideoWhenCovered, forKey: Keys.popOutVideoWhenCovered)
+        }
+    }
+
     /// Whether the YouTube player controls overlay the docked watch-page video,
     /// auto-hiding like a regular video player, instead of sitting in the bar at
     /// the bottom of the window. Applies to regular YouTube videos only, not the
@@ -598,6 +608,7 @@ final class SettingsManager {
                 ?? Self.ambientBackdropStrengthDefault
         )
         self.popOutVideoOnNavigateAway = UserDefaults.standard.object(forKey: Keys.popOutVideoOnNavigateAway) as? Bool ?? true
+        self.popOutVideoWhenCovered = UserDefaults.standard.object(forKey: Keys.popOutVideoWhenCovered) as? Bool ?? true
         self.showYouTubeControlsOnVideo = Self.loadShowYouTubeControlsOnVideo(from: UserDefaults.standard)
         #if DEBUG
             self.useLegacyMacOS15UI = UserDefaults.standard.object(forKey: Keys.useLegacyMacOS15UI) as? Bool ?? false

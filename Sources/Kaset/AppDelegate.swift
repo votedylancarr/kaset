@@ -30,6 +30,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Set by KasetApp after initialization.
     weak var playerService: PlayerService?
     weak var scrobblingCoordinator: ScrobblingCoordinator?
+    weak var youtubePlayerService: YouTubePlayerService?
+
+    /// Watches the main window for being fully covered (pops a playing video out).
+    private let coverageMonitor = MainWindowCoverageMonitor()
 
     /// URLs received before the SwiftUI scene is ready to observe deep links.
     private var pendingOpenURLs: [URL] = []
@@ -166,11 +170,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.delegate = self
         MainWindowLayout.configureKnownPrimaryWindow(window)
         self.mainWindow = window
+        self.coverageMonitor.observe(window) { [weak self] isCovered in
+            self?.youtubePlayerService?.applyMainWindowCoverage(isCovered: isCovered)
+        }
     }
 
     /// Releases a detached primary scene without disturbing a newer window.
     func unregisterMainWindow(_ window: NSWindow) {
         guard self.mainWindow === window else { return }
+        self.coverageMonitor.stop()
         if window.delegate === self {
             window.delegate = nil
         }
@@ -288,7 +296,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Show main window when dock icon is clicked
+        let wasAlreadyVisible = self.mainWindow?.isVisible == true && self.mainWindow?.isMiniaturized == false
         self.showMainWindowIfNeeded()
+        // A floating video must never be all a dock click shows. If the window was
+        // already on screen (e.g. covered by another app) `showMainWindowIfNeeded`
+        // leaves it where it is, so raise it, and bring the video back to it when
+        // that window is on the video's page.
+        if let mainWindow, MainWindowLayout.isPrimaryWindow(mainWindow) {
+            if wasAlreadyVisible {
+                mainWindow.makeKeyAndOrderFront(nil)
+            }
+            self.youtubePlayerService?.dockFloatingVideoOnItsPage()
+        }
         return true
     }
 

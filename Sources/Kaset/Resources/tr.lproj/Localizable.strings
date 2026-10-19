@@ -367,6 +367,8 @@
 "Podcasts" = "Podcastler";
 "Pop" = "Pop";
 "Pop Out Video When Navigating Away" = "Sayfadan Ayrılırken Videoyu Açılır Pencerede Aç";
+"Pop Out Video When Covered" = "Kapatıldığında videoyu ayır";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "Diğer pencereler Kaset'i kapattığında oynatılan videoyu yüzen pencereye taşır, Kaset yeniden göründüğünde geri getirir.";
 "Pop video back into Kaset" = "Videoyu yeniden Kaset'e al";
 "Post comment" = "Yorumu gönder";
 "Preamp" = "Ön Yükselteç";

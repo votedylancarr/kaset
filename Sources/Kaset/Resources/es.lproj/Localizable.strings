@@ -367,6 +367,8 @@
 "Podcasts" = "Podcasts";
 "Pop" = "Pop";
 "Pop Out Video When Navigating Away" = "Sacar el video al salir de la página";
+"Pop Out Video When Covered" = "Sacar el vídeo cuando esté tapado";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "Mueve un vídeo en reproducción a la ventana flotante cuando otras ventanas cubren Kaset y lo devuelve cuando Kaset vuelve a ser visible.";
 "Pop video back into Kaset" = "Volver a poner el video en Kaset";
 "Post comment" = "Publicar comentario";
 "Preamp" = "Preamplificación";

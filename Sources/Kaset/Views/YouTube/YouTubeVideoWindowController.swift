@@ -218,6 +218,15 @@ final class YouTubeVideoWindowController {
             name: NSWindow.didExitFullScreenNotification,
             object: window
         )
+        // The pop-out must stay visible while another app is frontmost, so its
+        // level follows app activation (see `applyDesiredWindowedLevel`).
+        for name in [NSApplication.didResignActiveNotification, NSApplication.didBecomeActiveNotification] {
+            NotificationCenter.default.addObserver(self, selector: #selector(self.appActivationChanged), name: name, object: nil)
+        }
+    }
+
+    @objc private func appActivationChanged(_: Notification) {
+        self.syncWindowState()
     }
 
     /// Applies the latest desired Float on Top setting to a safely windowed
@@ -238,7 +247,12 @@ final class YouTubeVideoWindowController {
     /// window is back in a safe windowed phase.
     private func applyDesiredWindowedLevel(to window: NSWindow) {
         YouTubeVideoWindowLevelPolicy.applyWindowedLevel(
-            isPinned: SettingsManager.shared.keepYouTubeVideoOnTop,
+            // A pop-out must stay visible while another app is frontmost (and when
+            // the main window was covered), or it would be hidden behind that app
+            // like any other window. While Kaset is active, Float on Top decides.
+            isPinned: SettingsManager.shared.keepYouTubeVideoOnTop
+                || (self.youtubePlayerService?.isPoppedOutForCoverage ?? false)
+                || !NSApp.isActive,
             to: window
         )
     }
@@ -363,6 +377,8 @@ final class YouTubeVideoWindowController {
         // stack on the shared singleton across show/close cycles. (The willClose
         // observer is removed on the close paths before cleanup runs.) Scoped to
         // the window object, mirroring how show() registered them.
+        NotificationCenter.default.removeObserver(self, name: NSApplication.didResignActiveNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSApplication.didBecomeActiveNotification, object: nil)
         if let window = self.window {
             NotificationCenter.default.removeObserver(
                 self,

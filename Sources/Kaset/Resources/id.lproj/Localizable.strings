@@ -367,6 +367,8 @@
 "Podcasts" = "Podcast";
 "Pop" = "Pop";
 "Pop Out Video When Navigating Away" = "Pop Out Video Saat Menjelajah";
+"Pop Out Video When Covered" = "Keluarkan video saat tertutup";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "Pindahkan video yang sedang diputar ke jendela mengambang saat jendela lain menutupi Kaset, lalu kembalikan saat Kaset terlihat lagi.";
 "Pop video back into Kaset" = "Kembalikan video ke Kaset";
 "Post comment" = "Posting komentar";
 "Preamp" = "Preamp";

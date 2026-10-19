@@ -367,6 +367,8 @@
 "Podcasts" = "팟캐스트";
 "Pop" = "팝";
 "Pop Out Video When Navigating Away" = "페이지 이동 시 동영상 팝아웃";
+"Pop Out Video When Covered" = "가려지면 비디오 팝아웃";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "다른 윈도우가 Kaset을 가리면 재생 중인 비디오를 플로팅 윈도우로 옮기고, Kaset이 다시 보이면 되돌립니다.";
 "Pop video back into Kaset" = "비디오를 Kaset으로 다시 가져오기";
 "Post comment" = "댓글 게시";
 "Preamp" = "프리앰프";

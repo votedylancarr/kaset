@@ -212,6 +212,7 @@ struct KasetApp: App {
         // This ensures playerService is available for lifecycle events like queue restoration
         self.appDelegate.playerService = player
         self.appDelegate.scrobblingCoordinator = scrobblingCoordinator
+        self.appDelegate.youtubePlayerService = youtubePlayer
 
         if UITestConfig.isUITestMode {
             DiagnosticsLogger.ui.info("App launched in UI Test mode")

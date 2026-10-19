@@ -372,6 +372,8 @@
 "Podcasts" = "ポッドキャスト";
 "Pop" = "ポップ";
 "Pop Out Video When Navigating Away" = "移動時に動画をポップアウト";
+"Pop Out Video When Covered" = "覆われたときに動画をポップアウト";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "他のウインドウが Kaset を覆うと再生中の動画をフローティングウインドウに移し、Kaset が再び見えるようになると元に戻します。";
 "Pop video back into Kaset" = "動画を Kaset に戻す";
 "Post comment" = "コメントを投稿";
 "Preamp" = "プリアンプ";

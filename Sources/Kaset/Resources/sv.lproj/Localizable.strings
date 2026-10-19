@@ -367,6 +367,8 @@
 "Podcasts" = "Poddar";
 "Pop" = "Pop";
 "Pop Out Video When Navigating Away" = "Pop-out-video vid navigering";
+"Pop Out Video When Covered" = "Lyft ut video när fönstret är täckt";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "Flyttar en video som spelas till det flytande fönstret när andra fönster täcker Kaset, och tillbaka när Kaset syns igen.";
 "Pop video back into Kaset" = "Flytta tillbaka videon till Kaset";
 "Post comment" = "Publicera kommentar";
 "Preamp" = "Förstärkning";

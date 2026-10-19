@@ -367,6 +367,8 @@
 "Podcasts" = "Podcasts";
 "Pop" = "Pop";
 "Pop Out Video When Navigating Away" = "Video loskoppelen bij navigeren";
+"Pop Out Video When Covered" = "Video losmaken wanneer bedekt";
+"Move a playing video to the floating window when other windows cover Kaset, and back when Kaset is visible again." = "Verplaatst een video die wordt afgespeeld naar het zwevende venster wanneer andere vensters Kaset bedekken, en terug zodra Kaset weer zichtbaar is.";
 "Pop video back into Kaset" = "Video terug in Kaset plaatsen";
 "Post comment" = "Reactie plaatsen";
 "Preamp" = "Voorversterking";
