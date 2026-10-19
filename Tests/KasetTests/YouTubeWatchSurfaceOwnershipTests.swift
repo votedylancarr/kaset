@@ -61,4 +61,37 @@ struct YouTubeWatchSurfaceOwnershipTests {
         ))
         #expect(surface.superview === floatingContainer)
     }
+
+    @Test("A host scoped to a location claims only while the surface lives there")
+    func scopedHostClaimsOnlyForItsLocation() {
+        // Regression: after play() flipped the surface from .floating to .inline,
+        // the closing floating window re-rendered and stole the WebView back,
+        // leaving the inline page with a hidden, detached WebView that never loaded.
+        #expect(!YouTubeWatchSurfaceAttachment.mayClaim(
+            requiredLocation: .floating,
+            currentLocation: .inline
+        ))
+        #expect(YouTubeWatchSurfaceAttachment.mayClaim(
+            requiredLocation: .inline,
+            currentLocation: .inline
+        ))
+        #expect(YouTubeWatchSurfaceAttachment.mayClaim(
+            requiredLocation: .floating,
+            currentLocation: .floating
+        ))
+        #expect(!YouTubeWatchSurfaceAttachment.mayClaim(
+            requiredLocation: .inline,
+            currentLocation: .floating
+        ))
+    }
+
+    @Test("Unscoped hosts may claim from any location")
+    func unscopedHostMayAlwaysClaim() {
+        for location in [YouTubePlayerService.SurfaceLocation.none, .inline, .floating] {
+            #expect(YouTubeWatchSurfaceAttachment.mayClaim(
+                requiredLocation: nil,
+                currentLocation: location
+            ))
+        }
+    }
 }

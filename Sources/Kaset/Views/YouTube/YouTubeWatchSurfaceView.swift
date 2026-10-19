@@ -15,8 +15,19 @@ struct YouTubeWatchSurfaceView: NSViewRepresentable {
     /// from the newly active page.
     let expectedVideoId: String?
 
-    init(expectedVideoId: String? = nil) {
+    /// When present, this host may claim the singleton WebView only while the
+    /// player service says the surface belongs to that location. Without it, a
+    /// floating window that is closing can re-render after the inline watch page
+    /// claimed the surface, steal it back, and take it down with the window —
+    /// leaving the inline page with a hidden, detached WebView that never buffers.
+    let requiredLocation: YouTubePlayerService.SurfaceLocation?
+
+    init(
+        expectedVideoId: String? = nil,
+        requiredLocation: YouTubePlayerService.SurfaceLocation? = nil
+    ) {
         self.expectedVideoId = expectedVideoId
+        self.requiredLocation = requiredLocation
     }
 
     func makeNSView(context _: Context) -> YouTubeWatchContainerView {
@@ -27,6 +38,10 @@ struct YouTubeWatchSurfaceView: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: YouTubeWatchContainerView, context _: Context) {
+        guard YouTubeWatchSurfaceAttachment.mayClaim(
+            requiredLocation: self.requiredLocation,
+            currentLocation: self.youtubePlayer.surfaceLocation
+        ) else { return }
         YouTubeWatchWebView.shared.ensureInHierarchy(
             container: nsView,
             expectedVideoId: self.expectedVideoId,
@@ -39,6 +54,15 @@ struct YouTubeWatchSurfaceView: NSViewRepresentable {
 
 @MainActor
 enum YouTubeWatchSurfaceAttachment {
+    /// Whether a host scoped to `requiredLocation` may claim the surface while
+    /// the player service reports `currentLocation`. Unscoped hosts always may.
+    static func mayClaim(
+        requiredLocation: YouTubePlayerService.SurfaceLocation?,
+        currentLocation: YouTubePlayerService.SurfaceLocation
+    ) -> Bool {
+        requiredLocation == nil || requiredLocation == currentLocation
+    }
+
     @discardableResult
     static func claim(
         surface: NSView,

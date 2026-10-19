@@ -571,7 +571,7 @@ private struct YouTubeVideoWindowContent: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             ZStack(alignment: .bottom) {
-                YouTubeWatchSurfaceView()
+                YouTubeWatchSurfaceView(requiredLocation: .floating)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 if self.showsWindowChrome {

@@ -198,7 +198,7 @@ struct YouTubeWatchView: View {
         if self.presentsLiveSurface {
             // Clean video surface — playback is controlled from the Liquid
             // Glass player bar, at the bottom of the window or on the video.
-            YouTubeWatchSurfaceView()
+            YouTubeWatchSurfaceView(requiredLocation: .inline)
                 .accessibilityIdentifier(AccessibilityID.YouTubeContent.watchSurface)
                 .aspectRatio(16 / 9, contentMode: .fit)
                 .youtubeInlineVideoControls(isEnabled: self.showsControlsOnVideo)
