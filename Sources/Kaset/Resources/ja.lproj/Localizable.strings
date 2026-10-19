@@ -187,6 +187,9 @@
 "GitHub" = "GitHub";
 "Glow" = "グロー";
 "Glow Strength" = "グローの強さ";
+"Autoplay" = "自動再生";
+"Play Now" = "今すぐ再生";
+"Play the next suggested video automatically when this one ends" = "この動画が終わったら、次のおすすめ動画を自動で再生します";
 "Go to Album" = "アルバムへ移動";
 "Go to Artist" = "アーティストへ移動";
 "Guest Mode" = "ゲストモード";

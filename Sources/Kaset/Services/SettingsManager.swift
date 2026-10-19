@@ -35,6 +35,7 @@ final class SettingsManager {
         static let ambientBackdropEnabled = "settings.ambientBackdropEnabled"
         static let ambientBackdropStyle = "settings.ambientBackdropStyle"
         static let ambientBackdropStrength = "settings.ambientBackdropStrength"
+        static let autoplayNextVideo = "settings.autoplayNextVideo"
         static let popOutVideoOnNavigateAway = "settings.popOutVideoOnNavigateAway"
         static let showYouTubeControlsOnVideo = "settings.showYouTubeControlsOnVideo"
         #if DEBUG
@@ -461,6 +462,13 @@ final class SettingsManager {
         }
     }
 
+    /// Whether the next suggested YouTube video plays automatically when one ends.
+    var autoplayNextVideo: Bool {
+        didSet {
+            UserDefaults.standard.set(self.autoplayNextVideo, forKey: Keys.autoplayNextVideo)
+        }
+    }
+
     /// How strong the ambient glow is, as a multiplier on its default brightness.
     var ambientBackdropStrength: Double {
         didSet {
@@ -584,6 +592,7 @@ final class SettingsManager {
             to: Self.smartShuffleSuggestionsAheadRange
         )
         self.ambientBackdropEnabled = UserDefaults.standard.object(forKey: Keys.ambientBackdropEnabled) as? Bool ?? true
+        self.autoplayNextVideo = UserDefaults.standard.object(forKey: Keys.autoplayNextVideo) as? Bool ?? true
         self.ambientBackdropStrength = Self.clampAmbientBackdropStrength(
             UserDefaults.standard.object(forKey: Keys.ambientBackdropStrength) as? Double
                 ?? Self.ambientBackdropStrengthDefault

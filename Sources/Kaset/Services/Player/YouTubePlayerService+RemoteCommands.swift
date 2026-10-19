@@ -19,6 +19,8 @@ extension YouTubePlayerService {
         }
         self.youtubePlaybackIntentGeneration &+= 1
         let generation = self.youtubePlaybackIntentGeneration
+        // Any new playback intent (play, pause, seek, skip, stop) cancels a pending autoplay.
+        self.cancelAutoplayCountdown()
         if issuedAtMilliseconds == nil {
             self.youtubePlaybackIntentIssuedAtMilliseconds = previousBoundary > now + Self.maximumFutureCommandSkewMilliseconds
                 ? now

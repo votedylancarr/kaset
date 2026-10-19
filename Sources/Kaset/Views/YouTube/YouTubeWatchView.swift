@@ -212,6 +212,7 @@ struct YouTubeWatchView: View {
                 .accessibilityIdentifier(AccessibilityID.YouTubeContent.watchSurface)
                 .aspectRatio(16 / 9, contentMode: .fit)
                 .youtubeInlineVideoControls(isEnabled: self.showsControlsOnVideo)
+                .overlay { YouTubeVideoOverlays(video: self.video, location: .inline) }
                 .clipShape(.rect(cornerRadius: 12))
         } else if self.playsInFloatingWindow {
             // Native PiP-style placeholder while the video plays in the
@@ -444,8 +445,7 @@ struct YouTubeWatchView: View {
 
     private var relatedColumn: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Related", comment: "Related videos section header")
-                .font(.title3.bold())
+            YouTubeRelatedHeader()
 
             switch self.viewModel.loadingState {
             case .idle, .loading:

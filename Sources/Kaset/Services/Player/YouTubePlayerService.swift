@@ -246,6 +246,17 @@ final class YouTubePlayerService {
     /// YouTubeContentView can open the new video's watch view.
     private(set) var skipNavigationRequest: YouTubeVideo?
 
+    /// Whether the pending `skipNavigationRequest` should replace the current
+    /// watch page (autoplay) instead of stacking another page on top of it.
+    private(set) var skipNavigationReplacesCurrent = false
+
+    /// The next video queued by autoplay, with its countdown, while the ended
+    /// video's overlay is counting down. Written only by `YouTubePlayerService+Autoplay`.
+    var autoplayCountdown: AutoplayCountdown?
+    @ObservationIgnored var autoplayTask: Task<Void, Never>?
+    @ObservationIgnored var autoplayGeneration: UInt64 = 0
+    @ObservationIgnored let shouldAutoplayNext: @MainActor () -> Bool
+
     /// Whether the current video was added to Watch Later this session.
     private(set) var isInWatchLater = false
 
@@ -323,11 +334,13 @@ final class YouTubePlayerService {
         webKitManager: WebKitManager = .shared,
         playbackController: (any YouTubeWatchPlaybackControlling)? = nil,
         shouldPopOutOnNavigateAway: @escaping @MainActor () -> Bool = { SettingsManager.shared.popOutVideoOnNavigateAway },
+        shouldAutoplayNext: @escaping @MainActor () -> Bool = { SettingsManager.shared.autoplayNextVideo },
         playbackLoadingTimeout: Duration = .seconds(15)
     ) {
         self.webKitManager = webKitManager
         self.playbackController = playbackController ?? YouTubeWatchWebView.shared
         self.shouldPopOutOnNavigateAway = shouldPopOutOnNavigateAway
+        self.shouldAutoplayNext = shouldAutoplayNext
         self.playbackLoadingTimeout = playbackLoadingTimeout
     }
 
@@ -736,6 +749,7 @@ final class YouTubePlayerService {
         self.upNext = []
         self.history = []
         self.skipNavigationRequest = nil
+        self.skipNavigationReplacesCurrent = false
         self.pauseInPlaceOnDisappear = false
         self.playbackController.tearDown()
     }
@@ -826,9 +840,11 @@ final class YouTubePlayerService {
     /// Marks the skip navigation request as handled.
     func consumeSkipNavigationRequest() {
         self.skipNavigationRequest = nil
+        self.skipNavigationReplacesCurrent = false
     }
 
-    private func advance(to video: YouTubeVideo, recordingHistory: Bool = true) {
+    func advance(to video: YouTubeVideo, recordingHistory: Bool = true, replacingWatchPage: Bool = false) {
+        self.cancelAutoplayCountdown()
         self.autoplayRecoveryRequestGeneration &+= 1
         self.shouldRecoverAutoplayTransitionOnResume = false
         self.logger.info("YouTubePlayer: advancing to another video")
@@ -859,6 +875,7 @@ final class YouTubePlayerService {
         // Keep the surface where it is; when docked inline the content view
         // opens the new video's watch view.
         if self.surfaceLocation == .inline {
+            self.skipNavigationReplacesCurrent = replacingWatchPage
             self.skipNavigationRequest = video
         }
     }
@@ -1671,6 +1688,7 @@ extension YouTubePlayerService {
         if self.signalWatchConclusion() {
             self.watchActivityGeneration += 1
             self.onVideoEnded?(videoId)
+            self.beginAutoplayCountdownIfEnabled()
         }
         return true
     }

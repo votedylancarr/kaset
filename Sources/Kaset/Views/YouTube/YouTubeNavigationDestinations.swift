@@ -23,6 +23,9 @@ extension View {
                 // Attaches its own bar so it can hand the controls to the
                 // docked video (Settings → YouTube → Show Controls on Video).
                 YouTubeWatchView(video: video, client: client)
+                    // A new video gets a fresh page (view model, tasks); autoplay swaps
+                    // the route in place, which would otherwise reuse the old page's state.
+                    .id(video.videoId)
             case let .channel(channelId):
                 YouTubeChannelView(channelId: channelId, client: client)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

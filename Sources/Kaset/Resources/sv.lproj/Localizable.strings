@@ -184,6 +184,9 @@
 "GitHub" = "GitHub";
 "Glow" = "Skimmer";
 "Glow Strength" = "Glödstyrka";
+"Autoplay" = "Autouppspelning";
+"Play Now" = "Spela nu";
+"Play the next suggested video automatically when this one ends" = "Spela upp nästa föreslagna video automatiskt när den här tar slut";
 "Go to Album" = "Gå till album";
 "Go to Artist" = "Gå till artist";
 "Guest Mode" = "Gästläge";

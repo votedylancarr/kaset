@@ -184,6 +184,9 @@
 "GitHub" = "GitHub";
 "Glow" = "Cahaya";
 "Glow Strength" = "Kekuatan cahaya";
+"Autoplay" = "Putar otomatis";
+"Play Now" = "Putar sekarang";
+"Play the next suggested video automatically when this one ends" = "Putar video berikutnya yang disarankan secara otomatis saat video ini selesai";
 "Go to Album" = "Buka Album";
 "Go to Artist" = "Buka Artis";
 "Guest Mode" = "Mode Tamu";

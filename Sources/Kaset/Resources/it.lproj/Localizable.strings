@@ -184,6 +184,9 @@
 "GitHub" = "GitHub";
 "Glow" = "Bagliore";
 "Glow Strength" = "Intensità del bagliore";
+"Autoplay" = "Riproduzione automatica";
+"Play Now" = "Riproduci ora";
+"Play the next suggested video automatically when this one ends" = "Riproduce automaticamente il prossimo video suggerito al termine di questo";
 "Go to Album" = "Vai all'album";
 "Go to Artist" = "Vai all'artista";
 "Guest Mode" = "Modalità ospite";

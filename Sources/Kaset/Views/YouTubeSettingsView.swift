@@ -38,6 +38,9 @@ struct YouTubeSettingsView: View {
             }
 
             Section {
+                Toggle(String(localized: "Autoplay"), isOn: self.$settings.autoplayNextVideo)
+                    .help(String(localized: "Play the next suggested video automatically when this one ends"))
+
                 Toggle(String(localized: "Show Controls on Video"), isOn: self.$settings.showYouTubeControlsOnVideo)
                     .help(String(localized: "Place the playback controls on the video instead of in the bar at the bottom of the window"))
             } header: {

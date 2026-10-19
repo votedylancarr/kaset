@@ -184,6 +184,9 @@
 "GitHub" = "GitHub";
 "Glow" = "Parıltı";
 "Glow Strength" = "Parıltı gücü";
+"Autoplay" = "Otomatik oynat";
+"Play Now" = "Şimdi oynat";
+"Play the next suggested video automatically when this one ends" = "Bu video bittiğinde önerilen sonraki videoyu otomatik oynat";
 "Go to Album" = "Albüme Git";
 "Go to Artist" = "Sanatçıya Git";
 "Guest Mode" = "Misafir Modu";

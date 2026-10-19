@@ -98,7 +98,18 @@ struct YouTubeContentView: View {
         defer {
             self.youtubePlayer.consumeSkipNavigationRequest()
         }
-        self.store.navigationPath.append(YouTubeRoute.watch(video))
+        if self.youtubePlayer.skipNavigationReplacesCurrent, !self.store.navigationPath.isEmpty {
+            // Autoplay swaps the watch page in place, with no slide, so the
+            // thumbnail cover can crossfade into the next video.
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                self.store.navigationPath.removeLast()
+                self.store.navigationPath.append(YouTubeRoute.watch(video))
+            }
+        } else {
+            self.store.navigationPath.append(YouTubeRoute.watch(video))
+        }
     }
 
     /// Docks a popped-out video back into a watch view: adopts the one that

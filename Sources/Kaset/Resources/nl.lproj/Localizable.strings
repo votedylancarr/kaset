@@ -184,6 +184,9 @@
 "GitHub" = "GitHub";
 "Glow" = "Gloed";
 "Glow Strength" = "Gloeisterkte";
+"Autoplay" = "Automatisch afspelen";
+"Play Now" = "Nu afspelen";
+"Play the next suggested video automatically when this one ends" = "Speel de volgende voorgestelde video automatisch af wanneer deze eindigt";
 "Go to Album" = "Ga naar album";
 "Go to Artist" = "Ga naar artiest";
 "Guest Mode" = "Gastmodus";

@@ -190,6 +190,9 @@
 "GitHub" = "GitHub";
 "Glow" = "光暈";
 "Glow Strength" = "光暈強度";
+"Autoplay" = "自動播放";
+"Play Now" = "立即播放";
+"Play the next suggested video automatically when this one ends" = "目前影片結束後自動播放下一部推薦影片";
 "Go to Album" = "前往專輯";
 "Go to Artist" = "前往藝人";
 "Guest Mode" = "訪客模式";

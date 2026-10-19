@@ -165,10 +165,8 @@ struct YouTubePlayerServiceTests {
         self.controller = MockYouTubeWatchPlaybackController()
         // Pin the navigate-away pop-out gate ON so the existing pop-out
         // assertions don't depend on the global SettingsManager.shared state.
-        self.sut = YouTubePlayerService(
-            playbackController: self.controller,
-            shouldPopOutOnNavigateAway: { true }
-        )
+        // Autoplay is pinned OFF here; it has its own suite (YouTubeAutoplayTests).
+        self.sut = YouTubePlayerService(playbackController: self.controller, shouldPopOutOnNavigateAway: { true }, shouldAutoplayNext: { false })
     }
 
     @Test("Initial state is empty")

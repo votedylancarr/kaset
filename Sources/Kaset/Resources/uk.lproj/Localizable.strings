@@ -184,6 +184,9 @@
 "GitHub" = "GitHub";
 "Glow" = "Сяйво";
 "Glow Strength" = "Яскравість сяйва";
+"Autoplay" = "Автовідтворення";
+"Play Now" = "Відтворити зараз";
+"Play the next suggested video automatically when this one ends" = "Автоматично відтворювати наступне рекомендоване відео після завершення цього";
 "Go to Album" = "Перейти до альбому";
 "Go to Artist" = "Перейти до виконавця";
 "Guest Mode" = "Гостьовий режим";

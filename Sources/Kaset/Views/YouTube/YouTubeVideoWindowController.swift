@@ -573,6 +573,7 @@ private struct YouTubeVideoWindowContent: View {
             ZStack(alignment: .bottom) {
                 YouTubeWatchSurfaceView(requiredLocation: .floating)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .overlay { YouTubeVideoOverlays(video: self.youtubePlayer.currentVideo, location: .floating) }
 
                 if self.showsWindowChrome {
                     // The full player bar — same items as the main window, plus

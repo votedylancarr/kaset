@@ -184,6 +184,9 @@
 "GitHub" = "GitHub";
 "Glow" = "توهج";
 "Glow Strength" = "قوة التوهج";
+"Autoplay" = "التشغيل التلقائي";
+"Play Now" = "تشغيل الآن";
+"Play the next suggested video automatically when this one ends" = "تشغيل الفيديو المقترح التالي تلقائيًا عند انتهاء هذا الفيديو";
 "Go to Album" = "الانتقال إلى الألبوم";
 "Go to Artist" = "الانتقال إلى الفنان";
 "Guest Mode" = "وضع الضيف";

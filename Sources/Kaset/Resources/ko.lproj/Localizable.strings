@@ -184,6 +184,9 @@
 "GitHub" = "GitHub";
 "Glow" = "빛남";
 "Glow Strength" = "글로우 강도";
+"Autoplay" = "자동 재생";
+"Play Now" = "지금 재생";
+"Play the next suggested video automatically when this one ends" = "이 동영상이 끝나면 추천 동영상을 자동으로 재생합니다";
 "Go to Album" = "앨범으로 이동";
 "Go to Artist" = "아티스트로 이동";
 "Guest Mode" = "게스트 모드";
