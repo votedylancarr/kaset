@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - YouTubeRoute
 
 /// Navigation routes within the YouTube experience.
-enum YouTubeRoute: Hashable {
+enum YouTubeRoute: Hashable, Codable {
     case watch(YouTubeVideo)
     case channel(channelId: String)
     case playlist(playlistId: String)

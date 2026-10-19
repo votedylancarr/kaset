@@ -6,7 +6,7 @@ import Foundation
 /// Distinct from `Song`: YouTube's content model has no album/artist
 /// metadata — videos belong to channels and carry display-ready strings
 /// (view counts, relative dates) rather than structured values.
-struct YouTubeVideo: Identifiable, Hashable {
+struct YouTubeVideo: Identifiable, Hashable, Codable {
     let videoId: String
     let title: String
     let channelName: String?

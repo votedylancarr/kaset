@@ -119,7 +119,12 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
         self._didCompleteStartupPlaybackCleanup = didCompleteStartupPlaybackCleanup
         self.client = client
         self.youtubeClient = youtubeClient
-        _youtubeStore = State(initialValue: YouTubeViewModelStore(client: youtubeClient))
+        let youtubeStore = YouTubeViewModelStore(client: youtubeClient)
+        // Debug relaunch (`compile_and_run.sh`) only; always nil in release builds.
+        if let restoredPath = DebugSessionRestore.restoredYouTubePath() {
+            youtubeStore.navigationPath = restoredPath
+        }
+        _youtubeStore = State(initialValue: youtubeStore)
         _homeViewModel = State(initialValue: HomeViewModel(client: client))
         _exploreViewModel = State(initialValue: ExploreViewModel(client: client))
         _searchViewModel = State(initialValue: SearchViewModel(client: client))
@@ -584,6 +589,20 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
         }
         .animation(.easeInOut(duration: 0.25), value: self.playerService.showLyrics)
         .animation(.easeInOut(duration: 0.25), value: self.playerService.showQueue)
+        #if DEBUG
+        // Keep the debug-relaunch snapshot current; the relaunch kills the app, so
+        // there is no quit hook to save from.
+        .task {
+            while !Task.isCancelled {
+                DebugSessionRestore.save(
+                    musicSelection: self.navigationSelection,
+                    youtubeSelection: self.youtubeNavigationSelection,
+                    youtubePath: self.youtubeStore.navigationPath
+                )
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+        #endif
         .containerBackground(Color.kasetBackground, for: .window)
         // Match the toolbar to the app background so it doesn't stand out in dark mode.
         .toolbarBackground(Color.kasetBackground, for: .windowToolbar)

@@ -143,9 +143,15 @@ run_step "package app (${BUILD_CONFIG})" "${ROOT_DIR}/Scripts/build-app.sh" "${B
 
 # 6) Launch the packaged app.
 log "==> Launching app"
-if ! open "${APP_BUNDLE}"; then
+# Debug builds ask to reopen the page you were on (see DebugSessionRestore);
+# release builds and any launch outside this script start normally.
+RESTORE_ENV=()
+if [[ "${BUILD_CONFIG}" == "debug" ]]; then
+  RESTORE_ENV=(KASET_RESTORE_LAST_PAGE=1)
+fi
+if ! open ${RESTORE_ENV:+--env "${RESTORE_ENV[0]}"} "${APP_BUNDLE}"; then
   log "WARN: launch app returned non-zero; falling back to direct binary launch."
-  "${APP_BUNDLE}/Contents/MacOS/Kaset" >/dev/null 2>&1 &
+  env ${RESTORE_ENV[@]+"${RESTORE_ENV[@]}"} "${APP_BUNDLE}/Contents/MacOS/Kaset" >/dev/null 2>&1 &
   disown
 fi
 
