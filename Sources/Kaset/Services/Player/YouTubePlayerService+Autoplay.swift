@@ -48,7 +48,8 @@ extension YouTubePlayerService {
                   self.autoplayCountdown == countdown,
                   self.currentVideo?.videoId == current.videoId
             else { return }
-            self.advance(to: next, replacingWatchPage: self.activeInlineVideoId == current.videoId)
+            // Something queued while the card counted down goes first.
+            self.advance(to: self.userQueue.first ?? next, replacingWatchPage: self.activeInlineVideoId == current.videoId)
         }
     }
 
@@ -74,7 +75,7 @@ extension YouTubePlayerService {
         after current: YouTubeVideo,
         generation: UInt64
     ) async -> YouTubeVideo? {
-        if let queued = self.upNext.first {
+        if let queued = self.nextVideoCandidate {
             return queued
         }
         guard let client = self.youtubeClient else { return nil }

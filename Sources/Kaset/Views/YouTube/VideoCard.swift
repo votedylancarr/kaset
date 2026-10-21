@@ -37,6 +37,7 @@ struct VideoCard: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel(self.accessibilityText)
+        .youtubeQueueContextMenu(self.video)
     }
 
     private var metaText: String? {

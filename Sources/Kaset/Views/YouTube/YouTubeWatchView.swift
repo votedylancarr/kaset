@@ -445,6 +445,8 @@ struct YouTubeWatchView: View {
 
     private var relatedColumn: some View {
         VStack(alignment: .leading, spacing: 10) {
+            YouTubeQueuePanel()
+
             YouTubeRelatedHeader()
 
             switch self.viewModel.loadingState {
@@ -844,46 +846,6 @@ private struct ChapterCard: View {
             return String(format: "%d:%02d:%02d", hours, minutes, seconds)
         }
         return String(format: "%d:%02d", minutes, seconds)
-    }
-}
-
-// MARK: - RelatedVideoRow
-
-/// Compact related-rail row sized for the right column.
-private struct RelatedVideoRow: View {
-    let video: YouTubeVideo
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            VideoThumbnailView(video: self.video)
-                .frame(width: 140)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(self.video.title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-
-                if let channelName = self.video.channelName {
-                    Text(channelName)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-
-                if let viewCountText = self.video.viewCountText {
-                    Text(viewCountText)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                }
-            }
-
-            Spacer(minLength: 0)
-        }
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
     }
 }
 

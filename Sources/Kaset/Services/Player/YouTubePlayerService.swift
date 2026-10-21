@@ -235,6 +235,11 @@ final class YouTubePlayerService { // swiftlint:disable:this type_body_length
     /// Up-next candidates for skip-forward (related videos from the watch page).
     private(set) var upNext: [YouTubeVideo] = []
 
+    /// Videos the user queued ("Add to Queue" / "Play Next"). They play before the
+    /// related `upNext` list and last for the session. Changed only through
+    /// `YouTubePlayerService+Queue`.
+    var userQueue: [YouTubeVideo] = []
+
     /// Navigation chapters for the current video, loaded from the watch page's
     /// companion `next` response.
     private(set) var chapters: [YouTubeChapter] = []
@@ -632,7 +637,7 @@ final class YouTubePlayerService { // swiftlint:disable:this type_body_length
         self.isAwaitingResumeConfirmation = true
         self.hasObservedPausedMedia = false
         if self.shouldRecoverAutoplayTransitionOnResume {
-            if let nextVideo = self.upNext.first {
+            if let nextVideo = self.nextVideoCandidate {
                 self.advance(to: nextVideo)
             } else {
                 // Keep the deferred marker armed while lookup is in flight. A
@@ -822,7 +827,7 @@ final class YouTubePlayerService { // swiftlint:disable:this type_body_length
     func skipForward(ownedBy playbackIntentGeneration: UInt64) async {
         guard let current = self.currentVideo else { return }
 
-        var target = self.upNext.first
+        var target = self.nextVideoCandidate
         if target == nil, let client = self.youtubeClient {
             target = await (try? client.getWatchNext(videoId: current.videoId))?
                 .related.first { !$0.isShort }
@@ -866,6 +871,7 @@ final class YouTubePlayerService { // swiftlint:disable:this type_body_length
             self.rememberInHistory(current)
         }
         self.upNext.removeAll { $0.videoId == video.videoId }
+        self.userQueue.removeAll { $0.videoId == video.videoId }
 
         self.playbackWillStart?()
         self.currentVideo = video

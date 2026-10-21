@@ -38,6 +38,7 @@ struct VideoRowView: View {
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+        .youtubeQueueContextMenu(self.video)
     }
 }
 
