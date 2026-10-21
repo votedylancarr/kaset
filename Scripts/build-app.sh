@@ -256,6 +256,11 @@ install_binary "$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
 BUILD_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+# Flag builds made from a working tree with uncommitted changes, so a debug build
+# can't be mistaken for the clean commit it was cut from.
+if [[ "$GIT_COMMIT" != "unknown" && -n "$(git status --porcelain 2>/dev/null)" ]]; then
+  GIT_COMMIT="${GIT_COMMIT}-dirty"
+fi
 
 # Create PkgInfo
 echo -n "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"

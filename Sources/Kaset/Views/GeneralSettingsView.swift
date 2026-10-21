@@ -211,7 +211,12 @@ struct GeneralSettingsView: View {
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
-        return build.isEmpty ? version : "\(version) (\(build))"
+        let base = build.isEmpty ? version : "\(version) (\(build))"
+        // Local builds all report the same version; the commit tells them apart.
+        guard let commit = Bundle.main.infoDictionary?["KasetGitCommit"] as? String, commit != "unknown" else {
+            return base
+        }
+        return "\(base) · \(commit)"
     }
 
     // MARK: - Actions
