@@ -557,7 +557,10 @@ struct StoryboardSheet {
     let sheetURLs: [URL]
     private let cols: Int
     private let rows: Int
-    private let frameCount: Int
+    let frameCount: Int
+    /// Milliseconds between frames, or 0 when the frames are spread evenly over the
+    /// whole video (YouTube's convention for the lowest level).
+    let intervalMilliseconds: Int
 
     /// Sanity caps on values parsed from the (untrusted) WebView spec, so a
     /// malformed or hostile spec can't overflow the arithmetic or trigger a
@@ -567,14 +570,15 @@ struct StoryboardSheet {
     private static let maxFrameCount = 10000
     private static let maxSheets = 8
 
-    init?(spec: String) {
+    /// Parses one storyboard level. Level 0 (the default) is the densest single sheet
+    /// (one fetch, most cells), right for color sampling; hover previews use a larger
+    /// level (`previewLevel(in:)`) and a higher `maxSheets`.
+    init?(spec: String, level levelIndex: Int = 0, maxSheets: Int = StoryboardSheet.maxSheets) {
         let parts = spec.components(separatedBy: "|")
-        guard parts.count >= 2 else { return nil }
+        guard levelIndex >= 0, parts.count >= levelIndex + 2 else { return nil }
         let base = parts[0]
 
-        // Pick Level 0 — the densest single sheet (one fetch, most cells).
-        let levelIndex = 0
-        let fields = parts[1].components(separatedBy: "#")
+        let fields = parts[levelIndex + 1].components(separatedBy: "#")
         guard fields.count >= 8,
               let cols = Int(fields[3]),
               let rows = Int(fields[4]),
@@ -591,7 +595,7 @@ struct StoryboardSheet {
         let perSheet = cols * rows
         let sheetCount = min(
             Int((Double(frameCount) / Double(perSheet)).rounded(.up)),
-            Self.maxSheets
+            maxSheets
         )
         guard sheetCount > 0 else { return nil }
 
@@ -615,6 +619,61 @@ struct StoryboardSheet {
         self.cols = cols
         self.rows = rows
         self.frameCount = frameCount
+        self.intervalMilliseconds = max(Int(fields[5]) ?? 0, 0)
+    }
+
+    /// The level whose frames suit a hover preview: the smallest one at least 160 px
+    /// wide (sharp but light to fetch), else the largest available. `nil` when the
+    /// spec has no levels.
+    static func previewLevel(in spec: String) -> Int? {
+        let widths = spec.components(separatedBy: "|").dropFirst().map {
+            Int($0.components(separatedBy: "#").first ?? "") ?? 0
+        }
+        guard !widths.isEmpty else { return nil }
+        if let level = widths.firstIndex(where: { $0 >= 160 }) {
+            return level
+        }
+        return widths.indices.max { widths[$0] < widths[$1] }
+    }
+
+    /// Index of the frame to show for a position in the video.
+    func frameIndex(atFraction fraction: Double, duration: TimeInterval) -> Int {
+        guard self.frameCount > 0, fraction.isFinite else { return 0 }
+        let clamped = min(max(fraction, 0), 1)
+        let raw: Double = if self.intervalMilliseconds > 0, duration > 0 {
+            clamped * duration * 1000 / Double(self.intervalMilliseconds)
+        } else {
+            clamped * Double(self.frameCount)
+        }
+        return min(max(Int(raw.rounded(.down)), 0), self.frameCount - 1)
+    }
+
+    /// Which sheet (index into `sheetURLs`) holds `frame`.
+    func sheetIndex(ofFrame frame: Int) -> Int? {
+        let perSheet = self.cols * self.rows
+        guard frame >= 0, frame < self.frameCount, perSheet > 0 else { return nil }
+        let sheet = frame / perSheet
+        return sheet < self.sheetURLs.count ? sheet : nil
+    }
+
+    /// The sheet (index into `sheetURLs`) and crop rect holding `frame`, from the
+    /// fetched sheet's real pixel size. `nil` when the sheet isn't one we track.
+    func location(ofFrame frame: Int, pixelWidth width: Int, height: Int) -> (sheet: Int, rect: CGRect)? {
+        let perSheet = self.cols * self.rows
+        guard frame >= 0, frame < self.frameCount, perSheet > 0 else { return nil }
+        let sheet = frame / perSheet
+        guard sheet < self.sheetURLs.count else { return nil }
+        let cell = frame % perSheet
+        let cellWidth = width / self.cols
+        let cellHeight = height / self.rows
+        guard cellWidth > 0, cellHeight > 0 else { return nil }
+        let rect = CGRect(
+            x: (cell % self.cols) * cellWidth,
+            y: (cell / self.cols) * cellHeight,
+            width: cellWidth,
+            height: cellHeight
+        )
+        return (sheet, rect)
     }
 
     /// Row-major crop rects (top-left origin, matching `CGImage.cropping`) for

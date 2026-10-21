@@ -15,6 +15,8 @@ struct PlayerBarProgressLane: View {
     let onScrub: (Double) -> Void
     let onCommit: () -> Void
     let onMarkerPreviewChange: (PlayerBarProgressMarker?) -> Void
+    /// Reports the pointer's position along the track (0...1) while hovering, `nil` on exit.
+    let onHoverFractionChange: (Double?) -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
@@ -45,7 +47,8 @@ struct PlayerBarProgressLane: View {
         isLoading: Bool,
         onScrub: @escaping (Double) -> Void,
         onCommit: @escaping () -> Void,
-        onMarkerPreviewChange: @escaping (PlayerBarProgressMarker?) -> Void = { _ in }
+        onMarkerPreviewChange: @escaping (PlayerBarProgressMarker?) -> Void = { _ in },
+        onHoverFractionChange: @escaping (Double?) -> Void = { _ in }
     ) {
         self.fraction = fraction
         self.accent = accent
@@ -59,6 +62,7 @@ struct PlayerBarProgressLane: View {
         self.onScrub = onScrub
         self.onCommit = onCommit
         self.onMarkerPreviewChange = onMarkerPreviewChange
+        self.onHoverFractionChange = onHoverFractionChange
     }
 
     var body: some View {
@@ -240,11 +244,13 @@ struct PlayerBarProgressLane: View {
                     if self.dragFraction == nil {
                         self.updatePreviewMarker(self.nearestMarker(to: fraction, width: width))
                         self.updateHoveredSegment(self.segment(at: fraction))
+                        self.onHoverFractionChange(fraction)
                     }
                 case .ended:
                     if self.dragFraction == nil {
                         self.updatePreviewMarker(nil)
                         self.updateHoveredSegment(nil)
+                        self.onHoverFractionChange(nil)
                     }
                 }
             }

@@ -19,6 +19,9 @@ struct YouTubePlayerBarTimelineLane: View {
     @State private var seekValue: Double = 0
     @State private var isSeeking = false
     @State private var seekHold = PlayerBarSeekHold()
+    @State private var hoverFraction: Double?
+    @State private var preview = YouTubeSeekPreviewModel()
+    @State private var previewCardSize: CGSize = .zero
 
     var body: some View {
         PlayerBarProgressLane(
@@ -36,8 +39,20 @@ struct YouTubePlayerBarTimelineLane: View {
                 self.seekValue = fraction
             },
             onCommit: self.performSeek,
-            onMarkerPreviewChange: self.onMarkerPreviewChange
+            onMarkerPreviewChange: self.onMarkerPreviewChange,
+            onHoverFractionChange: { self.hoverFraction = $0 }
         )
+        .overlay(alignment: .topLeading) { self.seekPreviewOverlay }
+        .task(id: self.youtubePlayer.storyboardSpec) {
+            self.preview.configure(spec: self.youtubePlayer.storyboardSpec)
+        }
+        .onChange(of: self.previewFraction) { _, fraction in
+            if let fraction {
+                self.preview.show(fraction: fraction, duration: self.youtubePlayer.duration)
+            } else {
+                self.preview.hide()
+            }
+        }
         .onChange(of: self.youtubePlayer.progress) { _, newValue in
             self.reconcileHold(observedProgress: newValue)
             if !self.isSeeking, !self.seekHold.isActive, self.youtubePlayer.duration > 0 {
@@ -68,6 +83,36 @@ struct YouTubePlayerBarTimelineLane: View {
         }
         guard self.youtubePlayer.duration > 0 else { return 0 }
         return min(max(0, self.displayedPlaybackProgress / self.youtubePlayer.duration), 1)
+    }
+
+    /// Where the preview should show: the scrub position while dragging, else the hover position.
+    private var previewFraction: Double? {
+        guard self.canSeek, !self.isLive, self.youtubePlayer.duration > 0 else { return nil }
+        return self.isSeeking ? self.seekValue : self.hoverFraction
+    }
+
+    /// Thumbnail card above the lane, following the pointer and kept inside the lane's width.
+    private var seekPreviewOverlay: some View {
+        GeometryReader { geometry in
+            if let fraction = self.previewFraction, self.preview.image != nil {
+                let time = fraction * self.youtubePlayer.duration
+                let halfWidth = self.previewCardSize.width / 2
+                let centerX = geometry.size.width > self.previewCardSize.width
+                    ? min(max(fraction * geometry.size.width, halfWidth), geometry.size.width - halfWidth)
+                    : geometry.size.width / 2
+                YouTubeSeekPreviewCard(
+                    image: self.preview.image,
+                    timeText: PlayerBarSeekController.formatTime(time),
+                    chapterTitle: self.youtubePlayer.chapters.last { $0.startTime <= time }?.title
+                )
+                .fixedSize()
+                .onGeometryChange(for: CGSize.self) { $0.size } action: { self.previewCardSize = $0 }
+                .position(x: centerX, y: -(self.previewCardSize.height / 2) - 16)
+                .transition(.opacity)
+            }
+        }
+        .allowsHitTesting(false)
+        .animation(.easeOut(duration: 0.12), value: self.previewFraction != nil)
     }
 
     private var progressTextValue: TimeInterval {
