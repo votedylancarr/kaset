@@ -13,7 +13,8 @@ enum YouTubeWatchPlaybackLifecycle {
             if player.surfaceLocation == .floating {
                 player.dockInline()
             }
-        } else {
+        } else if !DebugSessionRestore.defersStart {
+            // (A debug relaunch starts its saved video centrally; see DebugSessionRestore.)
             player.play(
                 video: video,
                 usesCookieFreeDataStore: usesCookieFreeDataStore,

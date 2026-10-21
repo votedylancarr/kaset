@@ -593,11 +593,24 @@ struct MainWindow: View { // swiftlint:disable:this type_body_length
         // Keep the debug-relaunch snapshot current; the relaunch kills the app, so
         // there is no quit hook to save from.
         .task {
+            await DebugSessionRestore.startRestoredPlayback(
+                into: self.youtubePlayerService,
+                isAccountVerified: { self.accountService.verifiedAccountId != nil }
+            )
+        }
+        .task {
             while !Task.isCancelled {
                 DebugSessionRestore.save(
                     musicSelection: self.navigationSelection,
                     youtubeSelection: self.youtubeNavigationSelection,
-                    youtubePath: self.youtubeStore.navigationPath
+                    youtubePath: self.youtubeStore.navigationPath,
+                    playback: self.youtubePlayerService.currentVideo.map {
+                        DebugSessionRestore.Playback(
+                            video: $0,
+                            progress: self.youtubePlayerService.progress,
+                            isFloating: self.youtubePlayerService.surfaceLocation == .floating
+                        )
+                    }
                 )
                 try? await Task.sleep(for: .seconds(1))
             }
