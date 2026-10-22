@@ -214,6 +214,15 @@ final class MockYouTubeClient: YouTubeClientProtocol {
     /// Awaited before returning so playback tests can gate a specific call ordinal.
     var beforeWatchNextReturnByCallCount: (@Sendable (Int) async -> Void)?
 
+    /// Publish days (`"2026-10-31"`) by video id for `getVideoPublishDate`; missing ids return `nil`.
+    var publishDays: [String: String] = [:]
+    private(set) var publishDateCallCount = 0
+
+    func getVideoPublishDate(videoId: String) async throws -> Date? {
+        self.publishDateCallCount += 1
+        return self.publishDays[videoId].flatMap { YouTubeDateFormatter.date(fromISODay: $0) }
+    }
+
     func getWatchNext(videoId: String) async throws -> WatchNextData {
         self.getWatchNextCallCount += 1
         self.requestedWatchNextVideoIds.append(videoId)

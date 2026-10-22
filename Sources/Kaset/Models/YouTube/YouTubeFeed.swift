@@ -175,6 +175,9 @@ struct WatchNextData {
     var isSubscribed: Bool?
     /// Continuation token for the video's comments section.
     var commentsContinuation: String?
+    /// The video's exact publish day, from the watch page's absolute date (relative text
+    /// like "3 days ago" is in `publishedText`). `nil` when the page didn't give one.
+    var publishedDate: Date?
 
     init(
         videoTitle: String?,

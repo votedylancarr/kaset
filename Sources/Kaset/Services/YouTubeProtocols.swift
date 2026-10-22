@@ -57,6 +57,9 @@ protocol YouTubeClientProtocol: Sendable {
 
     /// Fetches watch-page companion data (metadata + related videos).
     func getWatchNext(videoId: String) async throws -> WatchNextData
+    /// The video's exact publish day, for lists that only carry relative dates ("2 years ago").
+    /// `nil` when YouTube doesn't give one.
+    func getVideoPublishDate(videoId: String) async throws -> Date?
 
     /// Fetches normal watch data and an optional Ask Gemini bootstrap from one
     /// shared `next` response.
@@ -150,5 +153,11 @@ extension YouTubeClientProtocol {
     /// Fetches watch history using the cache (the default for normal loads).
     func getHistory() async throws -> YouTubeFeed {
         try await self.getHistory(forceRefresh: false)
+    }
+}
+
+extension YouTubeClientProtocol {
+    func getVideoPublishDate(videoId _: String) async throws -> Date? {
+        nil
     }
 }

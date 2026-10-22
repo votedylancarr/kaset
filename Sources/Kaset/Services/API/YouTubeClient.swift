@@ -314,6 +314,12 @@ final class YouTubeClient: YouTubeClientProtocol { // swiftlint:disable:this typ
         return WatchNextParser.parse(data)
     }
 
+    func getVideoPublishDate(videoId: String) async throws -> Date? {
+        self.logger.debug("Fetching video publish date")
+        let data = try await self.request("player", body: ["videoId": videoId])
+        return YouTubeDateFormatter.publishDate(fromPlayerResponse: data)
+    }
+
     func getWatchPage(videoId: String) async throws -> YouTubeWatchPage {
         self.logger.info("Fetching YouTube watch page")
 

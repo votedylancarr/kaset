@@ -11,6 +11,7 @@ enum WatchNextParser {
         var videoTitle: String?
         var viewCountText: String?
         var publishedText: String?
+        var publishedDate: Date?
         var channel: YouTubeChannel?
         var isSubscribed: Bool?
         var secondaryDescriptionText: String?
@@ -23,6 +24,8 @@ enum WatchNextParser {
             if let primaryInfo = content["videoPrimaryInfoRenderer"] as? [String: Any] {
                 videoTitle = YouTubeItemParser.text(from: primaryInfo["title"])
                 publishedText = YouTubeItemParser.text(from: primaryInfo["relativeDateText"])
+                publishedDate = YouTubeItemParser.text(from: primaryInfo["dateText"])
+                    .flatMap { YouTubeDateFormatter.date(fromWatchPageText: $0) }
                 let viewCount = (primaryInfo["viewCount"] as? [String: Any])?["videoViewCountRenderer"]
                     as? [String: Any]
                 viewCountText = YouTubeItemParser.text(from: viewCount?["viewCount"])
@@ -60,7 +63,7 @@ enum WatchNextParser {
 
         let chapters = Self.chapters(of: data)
 
-        return WatchNextData(
+        var result = WatchNextData(
             videoTitle: videoTitle,
             viewCountText: viewCountText,
             publishedText: publishedText,
@@ -71,6 +74,8 @@ enum WatchNextParser {
             isSubscribed: isSubscribed,
             commentsContinuation: Self.commentsContinuation(of: data)
         )
+        result.publishedDate = publishedDate
+        return result
     }
 
     /// Navigation chapters exposed by YouTube's watch-next response.

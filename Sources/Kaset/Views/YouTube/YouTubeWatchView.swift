@@ -302,7 +302,9 @@ struct YouTubeWatchView: View {
 
             let meta = [
                 self.viewModel.data.viewCountText ?? self.video.viewCountText,
-                self.viewModel.data.publishedText ?? self.video.publishedText,
+                // The page's exact date ("October 31st, 2026"); relative text only as a fallback.
+                self.viewModel.data.publishedDate.map { YouTubeDateFormatter.absoluteString(from: $0) }
+                    ?? self.viewModel.data.publishedText ?? self.video.publishedText,
             ].compactMap(\.self)
             if !meta.isEmpty {
                 Text(meta.joined(separator: " · "))
@@ -494,7 +496,7 @@ struct YouTubeWatchView: View {
                 LazyVStack(alignment: .leading, spacing: 10) {
                     ForEach(self.viewModel.data.related) { related in
                         NavigationLink(value: YouTubeRoute.watch(related)) {
-                            RelatedVideoRow(video: related)
+                            RelatedVideoRow(video: related, client: self.viewModel.client)
                         }
                         .buttonStyle(.interactiveRow)
                     }

@@ -180,6 +180,19 @@ extension AccessibilityID.YouTubeContent {
 /// Compact related-rail row sized for the right column.
 struct RelatedVideoRow: View {
     let video: YouTubeVideo
+    /// Used to look up the exact publish date, which the related rail doesn't carry.
+    let client: any YouTubeClientProtocol
+
+    private let dateStore = YouTubeVideoDateStore.shared
+
+    /// Views and the exact publish date. YouTube only gives the related rail a relative
+    /// date, so the exact one is fetched as the row appears; relative text covers the gap.
+    private var detailText: String? {
+        let date = self.dateStore.date(for: self.video.videoId)
+            .map { YouTubeDateFormatter.absoluteString(from: $0) } ?? self.video.publishedText
+        let parts = [self.video.viewCountText, date].compactMap(\.self)
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -200,8 +213,8 @@ struct RelatedVideoRow: View {
                         .lineLimit(1)
                 }
 
-                if let viewCountText = self.video.viewCountText {
-                    Text(viewCountText)
+                if let detailText = self.detailText {
+                    Text(detailText)
                         .font(.system(size: 11))
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
@@ -213,5 +226,8 @@ struct RelatedVideoRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .youtubeQueueContextMenu(self.video)
+        .task(id: self.video.videoId) {
+            await self.dateStore.load(videoId: self.video.videoId, client: self.client)
+        }
     }
 }
