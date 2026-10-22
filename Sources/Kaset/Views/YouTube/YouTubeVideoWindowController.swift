@@ -187,6 +187,7 @@ final class YouTubeVideoWindowController {
         window.orderFront(nil)
         self.window = window
         self.isClosing = false
+        self.revealWhenVideoIsReady(window)
 
         NotificationCenter.default.addObserver(
             self,
@@ -411,6 +412,47 @@ final class YouTubeVideoWindowController {
         self.isClosing = false
     }
 
+    /// Keeps a freshly created pop-out invisible until its video is drawn at the right
+    /// size, then fades it in. Moving the web view into a new window rebuilds its
+    /// drawing layers (and a page that was still loading lays the video out small), so
+    /// showing the window at once flashes a black window with a small or missing video.
+    private func revealWhenVideoIsReady(_ window: NSWindow) {
+        window.alphaValue = 0
+        Task { @MainActor [weak self, weak window] in
+            let started = ContinuousClock.now
+            while ContinuousClock.now - started < Self.revealTimeout {
+                guard let self, let window, self.window === window else { return }
+                if await self.isVideoDrawn(in: window) { break }
+                try? await Task.sleep(for: .milliseconds(16))
+            }
+            guard let self, let window, self.window === window else { return }
+            NSAnimationContext.beginGrouping()
+            NSAnimationContext.current.duration = 0.14
+            window.animator().alphaValue = 1
+            NSAnimationContext.endGrouping()
+        }
+    }
+
+    /// Whether the web view has its drawing layers and the page's video fills the viewport.
+    private func isVideoDrawn(in window: NSWindow) async -> Bool {
+        guard window.occlusionState.contains(.visible),
+              let webView = YouTubeWatchWebView.shared.webView,
+              webView.window === window,
+              let root = webView.layer?.sublayers?.first,
+              root.sublayers?.isEmpty == false
+        else { return false }
+        let script = """
+        (function(){const v=document.querySelector('video');if(!v)return false;
+        const r=v.getBoundingClientRect();
+        return r.width>=innerWidth*0.95&&r.height>=innerHeight*0.95;})()
+        """
+        let result = try? await webView.evaluateJavaScript(script)
+        return (result as? Bool) == true
+    }
+
+    /// Longest a pop-out stays invisible waiting for its video (e.g. a slow page).
+    private static let revealTimeout: Duration = .milliseconds(800)
+
     private func positionAtDefaultLocation(window: NSWindow) {
         guard let screen = NSScreen.main else { return }
         let screenFrame = screen.visibleFrame
@@ -590,6 +632,7 @@ private struct YouTubeVideoWindowContent: View {
                 YouTubeWatchSurfaceView(requiredLocation: .floating)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .overlay { YouTubeVideoOverlays(video: self.youtubePlayer.currentVideo, location: .floating) }
+                    .overlay { YouTubePopOutCover(video: self.youtubePlayer.currentVideo) }
 
                 if self.showsWindowChrome {
                     // The full player bar — same items as the main window, plus
