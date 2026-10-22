@@ -31,14 +31,10 @@ struct AmbientVideoBackdrop: View {
     /// its sprite-sheet cells replace the coarse 3-still source. `nil` until the
     /// player publishes it (or unavailable).
     var storyboardSpec: String?
-    /// When true the glow is a soft halo meant to sit behind the video frame
-    /// (blobs hug the frame's edges, no window-wide base fill, edges fade out)
-    /// instead of a full-window background.
-    var anchoredToVideo = false
-    /// User-chosen multiplier on the anchored halo's brightness (1 = default).
+    /// User-chosen multiplier on the halo's brightness (1 = default).
     var strength = 1.0
-    /// How far the anchored halo's frame extends past the video on each side.
-    /// The blobs are placed on the video's edges using this.
+    /// How far the halo's frame extends past the video on each side; the ring of
+    /// light is drawn along the video's edges inside it.
     var haloInset: CGFloat = 160
 
     // MARK: State
@@ -60,11 +56,6 @@ struct AmbientVideoBackdrop: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
-    /// Slow ambient drift does not need display-link cadence. Eight samples per
-    /// second keeps the large blurred blobs moving smoothly enough while cutting
-    /// steady-state invalidations substantially compared with `.animation`.
-    nonisolated static let animatedTimelineInterval: TimeInterval = 1.0 / 8.0
-
     // MARK: Body
 
     var body: some View {
@@ -73,20 +64,11 @@ struct AmbientVideoBackdrop: View {
             if style == .off {
                 Color.clear
             } else if self.reduceTransparency {
-                // Reduce Transparency: flatten to a near-solid low tint, no glow.
-                if self.anchoredToVideo {
-                    Color.clear
-                } else {
-                    self.flatTint
-                }
-            } else if self.anchoredToVideo {
+                // Reduce Transparency: no glow.
+                Color.clear
+            } else {
                 self.ambientContent
                     .mask(self.haloMask)
-            } else {
-                ZStack {
-                    Color.kasetBackground
-                    self.ambientContent
-                }
             }
         }
         .animation(.easeInOut(duration: 0.3), value: self.palette)
@@ -132,46 +114,29 @@ struct AmbientVideoBackdrop: View {
 
     // MARK: Ambient composition
 
-    /// Branch on Reduce Motion rather than pausing the `TimelineView`, mirroring
-    /// the repo's `PulseModifier` pattern. `.soft` is intentionally steady (no
-    /// drift) so it reads as a calm version of the same glow.
+    /// The halo, sized to the space it is given.
     private var ambientContent: some View {
         GeometryReader { geo in
-            let style = self.effectiveStyle
-            if style == .soft || self.reduceMotion {
-                self.auroraLayer(size: geo.size, time: nil)
-            } else {
-                TimelineView(.periodic(from: .now, by: Self.animatedTimelineInterval)) { timeline in
-                    self.auroraLayer(
-                        size: geo.size,
-                        time: timeline.date.timeIntervalSinceReferenceDate
-                    )
-                }
-            }
+            self.auroraLayer(size: geo.size)
         }
     }
 
-    /// The hero: one drifting aurora, or two crossfading by playback position in
-    /// `.live` mode. Both sub-layers keep orbiting so motion never stops.
+    /// The hero: one ring of light, or two crossfading by playback position in
+    /// `.live` mode.
     @ViewBuilder
-    private func auroraLayer(size: CGSize, time: TimeInterval?) -> some View {
+    private func auroraLayer(size: CGSize) -> some View {
         let frames = self.renderFrames
-        // `.soft` is the calm style: same colors, dimmer than the drifting glow.
+        // `.soft` is the calm style: same colors, dimmer than `.glow`.
         let baseIntensity: Double = self.effectiveStyle == .soft ? 0.7 : 1.0
-        // The anchored halo is a subtle accent, not a page wash.
-        let intensity = self.anchoredToVideo ? baseIntensity * Self.haloIntensityScale * self.strength : baseIntensity
+        let intensity = baseIntensity * Self.haloIntensityScale * self.strength
         // Under Reduce Motion, collapse `.live` to a single static frame: the
-        // blobs already stop drifting (time: nil) and the colors must not
-        // cross-fade as playback advances either.
+        // colors must not cross-fade as playback advances.
         if frames.count <= 1 || self.reduceMotion {
-            Self.aurora(
+            Self.haloRing(
                 colors: frames.first ?? self.fallbackColors,
                 size: size,
-                time: time,
-                colorScheme: self.colorScheme,
-                intensity: intensity,
-                anchored: self.anchoredToVideo,
-                inset: self.haloInset
+                inset: self.haloInset,
+                intensity: intensity
             )
         } else {
             let position = (self.liveFraction ?? 0) * Double(frames.count - 1)
@@ -181,9 +146,9 @@ struct AmbientVideoBackdrop: View {
             let lowerColors = frames[lower].isEmpty ? self.fallbackColors : frames[lower]
             let upperColors = frames[upper].isEmpty ? self.fallbackColors : frames[upper]
             ZStack {
-                Self.aurora(colors: lowerColors, size: size, time: time, colorScheme: self.colorScheme, intensity: intensity, anchored: self.anchoredToVideo, inset: self.haloInset)
+                Self.haloRing(colors: lowerColors, size: size, inset: self.haloInset, intensity: intensity)
                     .opacity(1 - blend)
-                Self.aurora(colors: upperColors, size: size, time: time, colorScheme: self.colorScheme, intensity: intensity, anchored: self.anchoredToVideo, inset: self.haloInset)
+                Self.haloRing(colors: upperColors, size: size, inset: self.haloInset, intensity: intensity)
                     .opacity(blend)
             }
             .animation(.easeInOut(duration: 0.7), value: self.liveFraction)
@@ -223,75 +188,58 @@ struct AmbientVideoBackdrop: View {
         return [self.currentPalette.primary, self.currentPalette.secondary]
     }
 
-    /// A single drifting field of additively-blended color blobs. Static when
-    /// `time` is nil (Reduce Motion or the `.soft` style). `intensity` scales
-    /// the overall brightness so `.soft` reads dimmer than the drifting glow.
-    private static func aurora(
+    /// Number of colors sampled along each edge of the video frame.
+    nonisolated static let ringSamplesPerEdge = 6
+
+    /// A ring of light around the video frame. Each edge is a soft gradient through
+    /// colors sampled along that edge of the video, so the glow continues what is
+    /// actually at the border. `colors` holds `ringSamplesPerEdge` colors per edge in
+    /// the order top, right, bottom, left (each running clockwise); any other count
+    /// is spread over all four edges.
+    private static func haloRing(
         colors: [Color],
         size: CGSize,
-        time: TimeInterval?,
-        colorScheme: ColorScheme,
-        intensity: Double,
-        anchored: Bool = false,
-        inset: CGFloat = 0
+        inset: CGFloat,
+        intensity: Double
     ) -> some View {
-        let isDark = colorScheme == .dark
-        // Additive light reads as "glow" on a dark base; on a light base it
-        // blows out to white, so fall back to a softer source-over tint.
-        let blend: BlendMode = isDark ? .plusLighter : .normal
-        let coreOpacity: Double = (isDark ? 0.55 : 0.30) * intensity
-        let elapsed = time ?? 0
-        // Anchored: blobs sit ON the video's edges (the video hides their inner
-        // half), so the light that spills out matches what's at each edge.
-        let frameWidth = size.width - inset * 2
-        let frameHeight = size.height - inset * 2
-        let layout: [CGPoint] = anchored
-            ? Self.haloLayout.map { CGPoint(x: inset + $0.x * frameWidth, y: inset + $0.y * frameHeight) }
-            : Self.layout.map { CGPoint(x: $0.x * size.width, y: $0.y * size.height) }
-        let blurRadius: CGFloat = anchored ? 60 : 46
-        let driftScale: CGFloat = anchored ? 0.5 : 1.0
+        let count = Self.ringSamplesPerEdge
+        func edgeColors(_ edge: Int) -> [Color] {
+            if colors.count == count * 4 {
+                return Array(colors[edge * count ..< (edge + 1) * count])
+            }
+            return colors.isEmpty ? [.clear] : colors
+        }
+        let frame = CGRect(
+            x: inset,
+            y: inset,
+            width: max(size.width - inset * 2, 1),
+            height: max(size.height - inset * 2, 1)
+        )
+        // Strips straddle the frame edge, so the video hides their inner half.
+        let thickness: CGFloat = 34
+        let along: CGFloat = thickness
+        let blurRadius: CGFloat = 38
 
         return ZStack {
-            ForEach(Array(colors.prefix(layout.count).enumerated()), id: \.offset) { index, color in
-                let spot = layout[index]
-                let period = Self.periods[index]
-                let phase = Self.phases[index]
-                let driftX = time == nil ? 0 : 0.12 * driftScale * size.width * sin(elapsed / period + phase)
-                let driftY = time == nil ? 0 : 0.10 * driftScale * size.height * cos(elapsed / (period + 6) + phase)
-                let diameter = anchored ? frameHeight * 0.85 : size.width
-
-                RadialGradient(
-                    colors: [color.opacity(coreOpacity), .clear],
-                    center: .center,
-                    startRadius: 0,
-                    endRadius: diameter * 0.5
-                )
-                .frame(width: diameter, height: diameter)
-                .position(
-                    x: spot.x + driftX,
-                    y: spot.y + driftY
-                )
-                .blendMode(blend)
-            }
+            LinearGradient(colors: edgeColors(0), startPoint: .leading, endPoint: .trailing)
+                .frame(width: frame.width + along, height: thickness)
+                .position(x: frame.midX, y: frame.minY)
+            LinearGradient(colors: edgeColors(1), startPoint: .top, endPoint: .bottom)
+                .frame(width: thickness, height: frame.height + along)
+                .position(x: frame.maxX, y: frame.midY)
+            LinearGradient(colors: edgeColors(2), startPoint: .leading, endPoint: .trailing)
+                .frame(width: frame.width + along, height: thickness)
+                .position(x: frame.midX, y: frame.maxY)
+            LinearGradient(colors: edgeColors(3), startPoint: .top, endPoint: .bottom)
+                .frame(width: thickness, height: frame.height + along)
+                .position(x: frame.minX, y: frame.midY)
         }
         .compositingGroup()
         .blur(radius: blurRadius)
+        .opacity(min(max(intensity, 0), 1))
         .frame(width: size.width, height: size.height)
         .clipped()
     }
-
-    /// Resting positions (unit coords) for up to five blobs — spread across the
-    /// upper-mid field with one low so color still reaches the player bar.
-    private static let layout: [(x: CGFloat, y: CGFloat)] = [
-        (0.28, 0.24), (0.74, 0.20), (0.18, 0.58), (0.82, 0.64), (0.50, 0.42),
-    ]
-
-    /// Resting positions for the anchored halo, in unit coords of the video frame
-    /// itself: upper/lower left edge, upper/lower right edge, and bottom center.
-    /// Edge colors are sampled from the matching regions of the thumbnail.
-    private static let haloLayout: [(x: CGFloat, y: CGFloat)] = [
-        (0.0, 0.28), (1.0, 0.30), (0.0, 0.74), (1.0, 0.72), (0.5, 1.0),
-    ]
 
     /// How much dimmer the anchored halo is than the full-window backdrop.
     private static let haloIntensityScale: Double = 0.9
@@ -305,22 +253,6 @@ struct AmbientVideoBackdrop: View {
             .fill(.black)
             .padding(inset)
             .blur(radius: inset * 0.8)
-    }
-
-    /// Mutually-prime orbit periods (seconds) so the drift never visibly loops.
-    private static let periods: [Double] = [19, 23, 29, 31, 37]
-    private static let phases: [Double] = [0.0, 1.7, 3.1, 4.6, 5.9]
-
-    /// Reduce Transparency fallback: a flat, low-opacity tint, no motion.
-    private var flatTint: some View {
-        ZStack {
-            Color.kasetBackground
-            LinearGradient(
-                colors: [self.currentPalette.primary.opacity(0.14), .clear],
-                startPoint: .top,
-                endPoint: .center
-            )
-        }
     }
 
     // MARK: Loading
@@ -466,15 +398,15 @@ struct AmbientVideoBackdrop: View {
         return trimmed.isEmpty ? nil : Array(trimmed)
     }
 
-    /// Samples the image's edge regions, in the order of `haloLayout`: upper
-    /// left, upper right, lower left, lower right, bottom center. Each is the
-    /// region's average color, lifted just enough to read as emitted light, so the
-    /// halo continues the colors found at the video's actual edges.
+    /// Samples a ring of colors from the image's border: `ringSamplesPerEdge` average
+    /// colors along each edge in the order top, right, bottom, left (clockwise), each
+    /// lifted just enough to read as emitted light, so the halo continues the colors
+    /// found at the video's actual edges.
     nonisolated private static func extractSwatches(from image: NSImage) -> [Color] {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             return []
         }
-        let dimension = 32
+        let dimension = 48
         guard let context = CGContext(
             data: nil,
             width: dimension,
@@ -491,15 +423,27 @@ struct AmbientVideoBackdrop: View {
         guard let data = context.data else { return [] }
         let pointer = data.bindMemory(to: UInt8.self, capacity: dimension * dimension * 4)
 
-        // Unit-coordinate rects (origin top-left, row 0 is the image's top).
-        let regions: [CGRect] = [
-            CGRect(x: 0.0, y: 0.08, width: 0.14, height: 0.42),
-            CGRect(x: 0.86, y: 0.08, width: 0.14, height: 0.42),
-            CGRect(x: 0.0, y: 0.50, width: 0.14, height: 0.42),
-            CGRect(x: 0.86, y: 0.50, width: 0.14, height: 0.42),
-            CGRect(x: 0.20, y: 0.86, width: 0.60, height: 0.14),
-        ]
         let side = CGFloat(dimension)
+        let count = Self.ringSamplesPerEdge
+        let band: CGFloat = 0.10
+        // Unit-coordinate rects (origin top-left, row 0 is the image's top).
+        var regions: [CGRect] = []
+        for step in 0 ..< count {
+            let start = CGFloat(step) / CGFloat(count)
+            regions.append(CGRect(x: start, y: 0, width: 1 / CGFloat(count), height: band))
+        }
+        for step in 0 ..< count {
+            let start = CGFloat(step) / CGFloat(count)
+            regions.append(CGRect(x: 1 - band, y: start, width: band, height: 1 / CGFloat(count)))
+        }
+        for step in (0 ..< count).reversed() {
+            let start = CGFloat(step) / CGFloat(count)
+            regions.append(CGRect(x: start, y: 1 - band, width: 1 / CGFloat(count), height: band))
+        }
+        for step in (0 ..< count).reversed() {
+            let start = CGFloat(step) / CGFloat(count)
+            regions.append(CGRect(x: 0, y: start, width: band, height: 1 / CGFloat(count)))
+        }
         return regions.map { region in
             let firstColumn = Int(region.minX * side)
             let firstRow = Int(region.minY * side)
@@ -508,18 +452,18 @@ struct AmbientVideoBackdrop: View {
             var red = 0.0
             var green = 0.0
             var blue = 0.0
-            var count = 0.0
+            var pixels = 0.0
             for row in rows where row < dimension {
                 for column in columns where column < dimension {
                     let offset = (row * dimension + column) * 4
                     red += Double(pointer[offset])
                     green += Double(pointer[offset + 1])
                     blue += Double(pointer[offset + 2])
-                    count += 1
+                    pixels += 1
                 }
             }
-            guard count > 0 else { return Color.clear }
-            return Self.glowColor(red: red / count / 255, green: green / count / 255, blue: blue / count / 255)
+            guard pixels > 0 else { return Color.clear }
+            return Self.glowColor(red: red / pixels / 255, green: green / pixels / 255, blue: blue / pixels / 255)
         }
     }
 

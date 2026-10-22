@@ -203,9 +203,4 @@ struct AmbientBackdropStyleTests {
             lowPowerModeEnabled: false
         ) == .glow)
     }
-
-    @Test("Animated ambient cadence is periodic rather than display-link paced")
-    func animatedAmbientCadenceIsThrottled() {
-        #expect(AmbientVideoBackdrop.animatedTimelineInterval >= 0.1)
-    }
 }

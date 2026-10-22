@@ -59,7 +59,6 @@ struct AmbientGlowHost: View {
                     style: anchor.style,
                     liveFraction: anchor.liveFraction,
                     storyboardSpec: anchor.storyboardSpec,
-                    anchoredToVideo: true,
                     strength: anchor.strength,
                     haloInset: Self.spread
                 )
