@@ -40,7 +40,8 @@ struct YouTubePlayerBarTimelineLane: View {
             },
             onCommit: self.performSeek,
             onMarkerPreviewChange: self.onMarkerPreviewChange,
-            onHoverFractionChange: { self.hoverFraction = $0 }
+            onHoverFractionChange: { self.hoverFraction = $0 },
+            showsSegmentTooltip: !self.isShowingSeekPreview
         )
         .overlay(alignment: .topLeading) { self.seekPreviewOverlay }
         .task(id: self.youtubePlayer.storyboardSpec) {
@@ -91,6 +92,18 @@ struct YouTubePlayerBarTimelineLane: View {
         return self.isSeeking ? self.seekValue : self.hoverFraction
     }
 
+    /// Whether the seek preview card is up. It carries the chapter details, so the lane's own
+    /// chapter tooltip steps aside rather than stacking on top of it.
+    private var isShowingSeekPreview: Bool {
+        self.previewFraction != nil && self.preview.image != nil
+    }
+
+    /// The chapter containing `fraction`, for the preview card.
+    private func segment(at fraction: Double) -> PlayerBarProgressSegment? {
+        self.segments.first { fraction >= $0.start && fraction < $0.end }
+            ?? self.segments.last { fraction >= $0.start && fraction <= $0.end }
+    }
+
     /// Thumbnail card above the lane, following the pointer and kept inside the lane's width.
     private var seekPreviewOverlay: some View {
         GeometryReader { geometry in
@@ -103,7 +116,8 @@ struct YouTubePlayerBarTimelineLane: View {
                 YouTubeSeekPreviewCard(
                     image: self.preview.image,
                     timeText: PlayerBarSeekController.formatTime(time),
-                    chapterTitle: self.youtubePlayer.chapters.last { $0.startTime <= time }?.title
+                    chapterTitle: self.segment(at: fraction)?.title,
+                    chapterDetail: self.segment(at: fraction)?.detailText
                 )
                 .fixedSize()
                 .onGeometryChange(for: CGSize.self) { $0.size } action: { self.previewCardSize = $0 }

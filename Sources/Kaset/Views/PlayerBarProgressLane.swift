@@ -17,6 +17,9 @@ struct PlayerBarProgressLane: View {
     let onMarkerPreviewChange: (PlayerBarProgressMarker?) -> Void
     /// Reports the pointer's position along the track (0...1) while hovering, `nil` on exit.
     let onHoverFractionChange: (Double?) -> Void
+    /// Whether hovering a segment pops up its chapter tooltip. A host that shows its own
+    /// preview card (which carries the chapter details) turns this off so the two don't overlap.
+    let showsSegmentTooltip: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
@@ -48,7 +51,8 @@ struct PlayerBarProgressLane: View {
         onScrub: @escaping (Double) -> Void,
         onCommit: @escaping () -> Void,
         onMarkerPreviewChange: @escaping (PlayerBarProgressMarker?) -> Void = { _ in },
-        onHoverFractionChange: @escaping (Double?) -> Void = { _ in }
+        onHoverFractionChange: @escaping (Double?) -> Void = { _ in },
+        showsSegmentTooltip: Bool = true
     ) {
         self.fraction = fraction
         self.accent = accent
@@ -63,6 +67,7 @@ struct PlayerBarProgressLane: View {
         self.onCommit = onCommit
         self.onMarkerPreviewChange = onMarkerPreviewChange
         self.onHoverFractionChange = onHoverFractionChange
+        self.showsSegmentTooltip = showsSegmentTooltip
     }
 
     var body: some View {
@@ -190,7 +195,7 @@ struct PlayerBarProgressLane: View {
                     )
                     .opacity(self.canSeek ? 1 : 0)
 
-                if let segment = self.hoveredSegment, self.segments.contains(segment), !self.isLoading {
+                if self.showsSegmentTooltip, let segment = self.hoveredSegment, self.segments.contains(segment), !self.isLoading {
                     self.segmentTooltip(segment, trackWidth: width)
                         .onGeometryChange(for: CGSize.self) { $0.size } action: { self.tooltipSize = $0 }
                         .offset(

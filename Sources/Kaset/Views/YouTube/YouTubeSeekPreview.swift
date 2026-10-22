@@ -109,6 +109,8 @@ struct YouTubeSeekPreviewCard: View {
     let image: NSImage?
     let timeText: String
     let chapterTitle: String?
+    /// e.g. "Chapter 7/9 · 8:43 – 10:10".
+    var chapterDetail: String?
 
     var body: some View {
         VStack(spacing: 6) {
@@ -127,9 +129,17 @@ struct YouTubeSeekPreviewCard: View {
             VStack(spacing: 1) {
                 if let chapterTitle {
                     Text(chapterTitle)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 11, weight: .semibold))
                         .lineLimit(1)
                         .foregroundStyle(.primary)
+                }
+                if let chapterDetail {
+                    Text(chapterDetail)
+                        .font(.system(size: 10))
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .foregroundStyle(.tertiary)
                 }
                 Text(self.timeText)
                     .font(.system(size: 12, weight: .semibold))
