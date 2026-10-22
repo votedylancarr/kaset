@@ -21,9 +21,9 @@ struct YouTubeWatchScriptTests {
             marker: "bridge.postMessage({",
             terminator: "});"
         )
-        #expect(self.occurrenceCount(of: "postMessage(", in: script) == 2)
-        #expect(payloads.count == 2)
-        for payload in payloads {
+        #expect(self.occurrenceCount(of: "postMessage(", in: script) == 3)
+        #expect(payloads.count == 3)
+        for payload in payloads where !payload.contains("TOGGLE_FULLSCREEN") {
             #expect(payload.contains("documentGeneration: window.__kasetDocumentGeneration"))
             #expect(payload.contains("mediaGeneration:"))
         }

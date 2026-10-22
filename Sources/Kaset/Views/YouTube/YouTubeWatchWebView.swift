@@ -83,6 +83,9 @@ final class YouTubeWatchWebView {
         let configuration = webKitManager.createWebViewConfiguration(
             websiteDataStore: usesCookieFreeDataStore ? .nonPersistent() : nil
         )
+        // Kaset owns fullscreen (its window, with its own controls). The page's own fullscreen
+        // would detach the web view into an empty WebKit fullscreen layer.
+        configuration.preferences.isElementFullscreenEnabled = false
         configuration.userContentController.add(self.coordinator!, name: "youtubePlayer")
         self.installUserScripts(
             on: configuration.userContentController,

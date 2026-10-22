@@ -33,6 +33,22 @@ extension YouTubeWatchWebView {
             'use strict';
 
             const bridge = window.webkit.messageHandlers.youtubePlayer;
+            // Double-clicking the video asks YouTube's page to fullscreen itself, which pulls the
+            // web view out of Kaset's window into an empty WebKit fullscreen layer. Kaset has its
+            // own fullscreen, so route the gesture there instead.
+            if (typeof document.addEventListener === 'function') {
+                document.addEventListener('dblclick', function(event) {
+                    const target = event.target;
+                    if (!target || !target.closest || !target.closest('#movie_player')) { return; }
+                    if (target.closest('.ytp-chrome-bottom, .ytp-popup, .ytp-chrome-top')) { return; }
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    bridge.postMessage({
+                        type: 'TOGGLE_FULLSCREEN',
+                        documentGeneration: window.__kasetDocumentGeneration
+                    });
+                }, true);
+            }
             const UPDATE_THROTTLE_MS = 1000;
             const MAX_ATTACH_RETRIES = 20;
             var mediaGeneration = 0;

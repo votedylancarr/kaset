@@ -16,6 +16,14 @@ extension YouTubePlayerService {
     /// video pops out to the floating window while covered, and docks back when the
     /// window is visible again. Only a pop-out caused by coverage is undone.
     func applyMainWindowCoverage(isCovered: Bool) {
+        // Entering or leaving fullscreen switches Spaces, which hides and shows the main
+        // window without the user covering anything. Fullscreen is the user's own choice
+        // of where the video lives, so coverage never moves it (and docking mid-fullscreen
+        // closes the pop-out under its own exit animation).
+        if self.isWindowFullscreen {
+            self.isPoppedOutForCoverage = false
+            return
+        }
         if isCovered {
             guard self.shouldPopOutWhenCovered(),
                   self.surfaceLocation == .inline,

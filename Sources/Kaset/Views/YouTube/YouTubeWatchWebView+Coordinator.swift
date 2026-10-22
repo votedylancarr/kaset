@@ -35,6 +35,8 @@ extension YouTubeWatchWebView {
             switch type {
             case "STATE_UPDATE":
                 self.handleStateUpdate(body, documentGeneration: messageDocumentGeneration)
+            case "TOGGLE_FULLSCREEN":
+                YouTubeVideoWindowController.shared.toggleVideoFullscreen(for: self.playerService)
             case "VIDEO_ENDED":
                 self.handleVideoEnded(body, documentGeneration: messageDocumentGeneration)
             default:

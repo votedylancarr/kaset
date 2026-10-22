@@ -103,6 +103,8 @@ final class YouTubeVideoWindowController {
 
     /// Tracks whether the current fullscreen request should dock inline on exit.
     private var fullscreenIntent = YouTubeVideoWindowFullscreenIntentState()
+    /// Set when a close was requested while fullscreen; carried out once the exit finishes.
+    private var closesAfterFullscreenExit = false
 
     private init() {}
 
@@ -288,6 +290,12 @@ final class YouTubeVideoWindowController {
         if self.fullscreenIntent.consumeReturnInlineOnExit() {
             self.youtubePlayerService?.requestPopIn()
         }
+        if self.closesAfterFullscreenExit {
+            self.closesAfterFullscreenExit = false
+            if self.youtubePlayerService?.surfaceLocation != .floating {
+                self.close()
+            }
+        }
     }
 
     private func handleFailedFullscreenEntry(_ window: NSWindow) {
@@ -307,6 +315,21 @@ final class YouTubeVideoWindowController {
         )
         state.handle(transition)
         window.setFrameAutosaveName(state.currentName)
+    }
+
+    /// Fullscreen for the video from anywhere: pops an inline video out first (returning it to
+    /// the page when fullscreen ends), or toggles fullscreen on the video that is already
+    /// floating. Used by the bar's fullscreen button and by double-clicking the video.
+    func toggleVideoFullscreen(for player: YouTubePlayerService) {
+        if player.surfaceLocation == .inline {
+            player.popOutToWindow()
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(250))
+                self.toggleFullscreen(returnInlineOnExit: true)
+            }
+        } else {
+            self.toggleFullscreen()
+        }
     }
 
     /// Toggles fullscreen on the floating window.
@@ -337,6 +360,18 @@ final class YouTubeVideoWindowController {
 
     /// Closes the window programmatically (e.g. when docking back inline).
     func close() {
+        // Closing a window that is fullscreen (or mid-transition) strands its black
+        // fullscreen Space. Leave fullscreen first; `windowDidExitFullScreen` closes it.
+        if let window = self.window,
+           window.styleMask.contains(.fullScreen) || self.youtubePlayerService?.windowFullscreenPhase != .windowed
+        {
+            self.closesAfterFullscreenExit = true
+            if window.styleMask.contains(.fullScreen), self.youtubePlayerService?.windowFullscreenPhase != .exiting {
+                self.youtubePlayerService?.windowFullscreenPhase = .exiting
+                window.toggleFullScreen(nil)
+            }
+            return
+        }
         guard !self.isClosing else { return }
         guard let window = self.window else { return }
 
@@ -374,6 +409,7 @@ final class YouTubeVideoWindowController {
     private func performCleanup() {
         self.youtubePlayerService?.windowFullscreenPhase = .windowed
         self.fullscreenIntent.cancelReturnInlineOnExit()
+        self.closesAfterFullscreenExit = false
         // Remove the fullscreen observers registered in show() so they don't
         // stack on the shared singleton across show/close cycles. (The willClose
         // observer is removed on the close paths before cleanup runs.) Scoped to
@@ -620,6 +656,10 @@ private struct YouTubeVideoWindowContent: View {
     @State private var settings = SettingsManager.shared
     @State private var isHovering = false
     @State private var isVolumeOverlayPresented = false
+    @State private var isPointerOverBar = false
+    @State private var isRecentlyActive = true
+    @State private var lastActivity = ContinuousClock.now
+    @State private var lastPointerLocation: CGPoint?
 
     /// Height of the top strip that moves the window. Generous enough to be
     /// an easy grab target; the top of the video carries no YouTube controls
@@ -643,6 +683,7 @@ private struct YouTubeVideoWindowContent: View {
                             self.isVolumeOverlayPresented = isPresented
                         }
                     )
+                    .onHover { self.isPointerOverBar = $0 }
                     .transition(.opacity)
                 }
             }
@@ -666,6 +707,18 @@ private struct YouTubeVideoWindowContent: View {
         .background(.black)
         .ignoresSafeArea()
         .environment(\.usesLegacyMacOS15UI, self.settings.useLegacyMacOS15UI)
+        .onContinuousHover { phase in
+            guard self.isFullscreen, case let .active(location) = phase, location != self.lastPointerLocation else { return }
+            self.lastPointerLocation = location
+            self.registerActivity()
+        }
+        // In fullscreen the pointer always rests inside the window, so hover alone would pin the
+        // bar open: fade it (and the cursor) after a few idle seconds of playback, like the
+        // inline controls.
+        .task(id: self.isFullscreen && self.isRecentlyActive) {
+            await self.hideWhenIdle()
+        }
+        .onChange(of: self.isFullscreen) { _, _ in self.registerActivity() }
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.18)) {
                 self.isHovering = hovering
@@ -681,10 +734,43 @@ private struct YouTubeVideoWindowContent: View {
         }
     }
 
+    private var isFullscreen: Bool {
+        self.youtubePlayer.windowFullscreenPhase == .fullscreen
+    }
+
     private var showsWindowChrome: Bool {
-        YouTubeVideoWindowLevelPolicy.shouldShowChrome(
+        let isHovered = YouTubeVideoWindowLevelPolicy.shouldShowChrome(
             isWindowHovered: self.isHovering,
             isVolumeOverlayPresented: self.isVolumeOverlayPresented
         )
+        guard self.isFullscreen else { return isHovered }
+        return isHovered && YouTubeInlineControlsVisibility.shouldShow(
+            isPlaying: self.youtubePlayer.isPlaying,
+            isRecentlyActive: self.isRecentlyActive,
+            isPointerOverControls: self.isPointerOverBar,
+            isControlPopupOpen: self.isVolumeOverlayPresented,
+            isAssistiveNavigationActive: false
+        )
+    }
+
+    private func registerActivity() {
+        self.lastActivity = .now
+        if !self.isRecentlyActive {
+            self.isRecentlyActive = true
+        }
+    }
+
+    /// Clears `isRecentlyActive` once the pointer has been still for `idleDelay`.
+    private func hideWhenIdle() async {
+        guard self.isFullscreen, self.isRecentlyActive else { return }
+        while true {
+            let deadline = self.lastActivity + YouTubeInlineControlsVisibility.idleDelay
+            guard await (try? Task.sleep(until: deadline, clock: .continuous)) != nil else { return }
+            if ContinuousClock.now >= self.lastActivity + YouTubeInlineControlsVisibility.idleDelay { break }
+        }
+        self.isRecentlyActive = false
+        if self.youtubePlayer.isPlaying, !self.isPointerOverBar {
+            NSCursor.setHiddenUntilMouseMoves(true)
+        }
     }
 }

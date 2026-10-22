@@ -94,6 +94,26 @@ struct YouTubeCoverageTests {
         #expect(sut.surfaceLocation == .floating)
     }
 
+    @Test("Fullscreen never counts as the window being covered")
+    func fullscreenIgnoresCoverage() {
+        let sut = self.makePlayingSUT()
+        sut.windowFullscreenPhase = .fullscreen
+
+        sut.applyMainWindowCoverage(isCovered: true)
+        #expect(sut.surfaceLocation == .inline)
+        #expect(!sut.isPoppedOutForCoverage)
+
+        // A pop-out made earlier is left alone when the Space switch shows the main window.
+        sut.windowFullscreenPhase = .windowed
+        sut.applyMainWindowCoverage(isCovered: true)
+        sut.windowFullscreenPhase = .fullscreen
+        sut.applyMainWindowCoverage(isCovered: false)
+
+        #expect(sut.surfaceLocation == .floating)
+        #expect(sut.popInRequest == nil)
+        #expect(!sut.isPoppedOutForCoverage)
+    }
+
     @Test("Closing the floating window clears the coverage pop-out")
     func stopClearsFlag() {
         let sut = self.makePlayingSUT()
