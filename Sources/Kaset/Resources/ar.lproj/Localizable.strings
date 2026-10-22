@@ -84,6 +84,8 @@
 "Clear Cache" = "مسح ذاكرة التخزين المؤقت";
 "Clear input" = "مسح المدخلات";
 "Clear Queue" = "مسح قائمة الانتظار";
+"Show more" = "عرض المزيد";
+"Show less" = "عرض أقل";
 "Clear search" = "مسح البحث";
 "Clear the entire queue and stop playback." = "امسح قائمة الانتظار بالكامل وأوقف التشغيل.";
 "Clearing..." = "جارٍ المسح...";

@@ -84,6 +84,8 @@
 "Clear Cache" = "캐시 지우기";
 "Clear input" = "입력 지우기";
 "Clear Queue" = "대기열 지우기";
+"Show more" = "더 보기";
+"Show less" = "간단히 보기";
 "Clear search" = "검색 지우기";
 "Clear the entire queue and stop playback." = "전체 대기열을 지우고 재생을 중지합니다.";
 "Clearing..." = "지우는 중...";

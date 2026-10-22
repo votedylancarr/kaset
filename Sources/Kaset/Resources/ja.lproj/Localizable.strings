@@ -86,6 +86,8 @@
 "Clear AI Context" = "AI のコンテキストをクリア";
 "Clear Cache" = "キャッシュをクリア";
 "Clear Queue" = "キューをクリア";
+"Show more" = "もっと見る";
+"Show less" = "表示を減らす";
 "Clear input" = "入力をクリア";
 "Clear search" = "検索をクリア";
 "Clear the entire queue and stop playback." = "キュー全体をクリアして再生を停止します。";

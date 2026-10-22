@@ -89,6 +89,8 @@
 "Clear AI Context" = "清除 AI 上下文";
 "Clear Cache" = "清除缓存";
 "Clear Queue" = "清空队列";
+"Show more" = "显示更多";
+"Show less" = "显示较少";
 "Clear input" = "清除输入";
 "Clear search" = "清除搜索内容";
 "Clear the entire queue and stop playback." = "清空整个队列并停止播放。";

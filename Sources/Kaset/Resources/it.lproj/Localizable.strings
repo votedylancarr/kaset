@@ -84,6 +84,8 @@
 "Clear Cache" = "Cancella cache";
 "Clear input" = "Cancella input";
 "Clear Queue" = "Svuota coda";
+"Show more" = "Mostra altro";
+"Show less" = "Mostra meno";
 "Clear search" = "Cancella ricerca";
 "Clear the entire queue and stop playback." = "Svuota l'intera coda e interrompi la riproduzione.";
 "Clearing..." = "Cancellazione…";

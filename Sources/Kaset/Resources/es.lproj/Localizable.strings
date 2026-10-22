@@ -84,6 +84,8 @@
 "Clear Cache" = "Vaciar caché";
 "Clear input" = "Borrar entrada";
 "Clear Queue" = "Borrar cola";
+"Show more" = "Mostrar más";
+"Show less" = "Mostrar menos";
 "Clear search" = "Borrar búsqueda";
 "Clear the entire queue and stop playback." = "Borra toda la cola y detén la reproducción.";
 "Clearing..." = "Borrando…";

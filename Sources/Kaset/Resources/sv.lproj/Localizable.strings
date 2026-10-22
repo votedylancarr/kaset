@@ -84,6 +84,8 @@
 "Clear Cache" = "Rensa cache";
 "Clear input" = "Rensa inmatning";
 "Clear Queue" = "Rensa kön";
+"Show more" = "Visa mer";
+"Show less" = "Visa mindre";
 "Clear search" = "Rensa sökning";
 "Clear the entire queue and stop playback." = "Rensa hela kön och stoppa uppspelningen.";
 "Clearing..." = "Rensar…";

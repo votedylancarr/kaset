@@ -84,6 +84,8 @@
 "Clear Cache" = "Önbelleği Temizle";
 "Clear input" = "Girdiyi temizle";
 "Clear Queue" = "Kuyruğu temizle";
+"Show more" = "Daha fazla göster";
+"Show less" = "Daha az göster";
 "Clear search" = "Aramayı temizle";
 "Clear the entire queue and stop playback." = "Tüm kuyruğu temizleyin ve oynatmayı durdurun.";
 "Clearing..." = "Temizleniyor...";

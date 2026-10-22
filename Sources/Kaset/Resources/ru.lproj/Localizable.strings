@@ -84,6 +84,8 @@
 "Clear Cache" = "Очистить кэш";
 "Clear input" = "Очистить ввод";
 "Clear Queue" = "Очистить очередь";
+"Show more" = "Показать ещё";
+"Show less" = "Показать меньше";
 "Clear search" = "Очистить поиск";
 "Clear the entire queue and stop playback." = "Очистите всю очередь и остановите воспроизведение.";
 "Clearing..." = "Очистка…";

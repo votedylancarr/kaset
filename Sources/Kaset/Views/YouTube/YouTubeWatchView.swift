@@ -29,6 +29,7 @@ struct YouTubeWatchView: View {
     @State private var settings = SettingsManager.shared
     @State private var isVideoControlsRegionOnScreen = true
     @State private var videoFrame: CGRect = .zero
+    @State private var scrollPosition = ScrollPosition()
 
     /// The ambient backdrop style to render: the user's chosen style, or `.off`
     /// when they've disabled the feature in Settings → YouTube.
@@ -120,6 +121,13 @@ struct YouTubeWatchView: View {
             .padding(.vertical, 20)
         }
         .disabled(self.viewModel.ask.isExpanded)
+        .scrollPosition(self.$scrollPosition)
+        // Timestamps in the description and comments are links to a point in this video.
+        .environment(\.openURL, OpenURLAction { url in
+            guard let seconds = YouTubeTimestampLinker.seconds(from: url) else { return .systemAction }
+            self.seek(toTimestamp: seconds)
+            return .handled
+        })
         .onChange(of: self.ambientAnchor, initial: true) { _, anchor in
             AmbientGlowState.shared.anchor = anchor
         }
@@ -341,6 +349,10 @@ struct YouTubeWatchView: View {
                     Spacer(minLength: 0)
                 }
             }
+
+            if let description = self.viewModel.data.descriptionText, !description.isEmpty {
+                YouTubeDescriptionSection(text: description)
+            }
         }
     }
 
@@ -407,11 +419,21 @@ struct YouTubeWatchView: View {
 
     private func seekToChapter(_ chapter: YouTubeChapter) {
         guard self.canSeekToChapter(chapter) else { return }
+        self.seek(toTimestamp: chapter.startTime)
+    }
+
+    /// Jumps this page's video to `time` (starting it there if it isn't playing yet) and
+    /// scrolls the video into view, so a timestamp clicked far down the page shows its result.
+    private func seek(toTimestamp time: TimeInterval) {
+        withAnimation(.smooth(duration: 0.35)) {
+            self.scrollPosition.scrollTo(edge: .top)
+        }
         if self.youtubePlayer.currentVideo?.videoId != self.video.videoId {
-            self.startOrAdoptPlayback(startAt: chapter.startTime)
+            self.startOrAdoptPlayback(startAt: time)
             return
         }
-        self.youtubePlayer.seek(to: chapter.startTime)
+        guard self.youtubePlayer.duration > 0, !self.youtubePlayer.isShowingAd else { return }
+        self.youtubePlayer.seek(to: min(time, self.youtubePlayer.duration))
     }
 
     private func canSeekToChapter(_ chapter: YouTubeChapter) -> Bool {
@@ -715,10 +737,7 @@ private struct CommentRow: View {
                     }
                 }
 
-                Text(self.comment.text)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.primary)
-                    .textSelection(.enabled)
+                YouTubeLinkedText(text: self.comment.text)
 
                 HStack(spacing: 14) {
                     Button(action: self.onLike) {

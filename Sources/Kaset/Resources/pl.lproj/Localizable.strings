@@ -84,6 +84,8 @@
 "Clear Cache" = "Wyczyść pamięć podręczną";
 "Clear input" = "Wyczyść dane wejściowe";
 "Clear Queue" = "Wyczyść kolejkę";
+"Show more" = "Pokaż więcej";
+"Show less" = "Pokaż mniej";
 "Clear search" = "Wyczyść wyszukiwanie";
 "Clear the entire queue and stop playback." = "Wyczyść całą kolejkę i zatrzymaj odtwarzanie.";
 "Clearing..." = "Czyszczenie…";
